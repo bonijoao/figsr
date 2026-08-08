@@ -9,7 +9,7 @@ Authors@R: c(
     person("Pedro", "Mambelli Fernandes", role = "aut")
   )
 Description: Flexible, interpretable machine learning algorithm for additive tree 
-    sums ('FIGS', Tan et al., 2022, <doi:10.1073/pnas.2214887120>). Fits a sum of 
+    sums ('FIGS', Tan et al., 2022, <doi:10.1073/pnas.2310151122>). Fits a sum of 
     shallow decision trees ('CART') by greedily minimizing residual impurity. 
     Includes seamless integration with 'parsnip' and 'tidymodels' workflows.
 License: MIT + file LICENSE
