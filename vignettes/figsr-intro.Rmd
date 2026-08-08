@@ -1,0 +1,38 @@
+---
+title: "Getting Started with figsr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with figsr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction to FIGS
+
+**figsr** implements Fast Interpretable Greedy-Tree Sums ('FIGS') (*Tan et al., PNAS 2022*). FIGS fits a sum of shallow decision trees ($\hat{f}(x) = \sum_k \hat{f}_k(x)$) by greedily minimizing residual impurity.
+
+---
+
+## Basic Usage
+
+```{r example}
+library(figsr)
+
+set.seed(42)
+df <- data.frame(
+  x1 = rnorm(100),
+  x2 = rnorm(100),
+  y = 3 * (rnorm(100) > 0) + rnorm(100, sd = 0.2)
+)
+
+fit <- figs(y ~ x1 + x2, data = df, max_splits = 4)
+print(fit)
+summary(fit)
+```
