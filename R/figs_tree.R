@@ -19,7 +19,7 @@
 #'   set_engine("figsr") |>
 #'   set_mode("regression")
 #' spec
-figs_tree <- function(mode = "unknown", max_splits = NULL, max_trees = NULL, min_n = NULL) {
+figs_tree <- function(mode = "regression", max_splits = NULL, max_trees = NULL, min_n = NULL) {
   args <- list(
     max_splits = rlang::enquo(max_splits),
     max_trees  = rlang::enquo(max_trees),
@@ -37,7 +37,7 @@ figs_tree <- function(mode = "unknown", max_splits = NULL, max_trees = NULL, min
 }
 
 #' @export
-figs_tree.default <- function(mode = "unknown", max_splits = NULL, max_trees = NULL, min_n = NULL) {
+figs_tree.default <- function(mode = "regression", max_splits = NULL, max_trees = NULL, min_n = NULL) {
   figs_tree(mode = mode, max_splits = max_splits, max_trees = max_trees, min_n = min_n)
 }
 
@@ -49,11 +49,39 @@ figs_tree.default <- function(mode = "unknown", max_splits = NULL, max_trees = N
 make_figs_tree_parsnip <- function() {
   if (!requireNamespace("parsnip", quietly = TRUE)) return(invisible(NULL))
   
-  # Register model
-  parsnip::set_model_engine("figs_tree", mode = "regression", engine = "figsr")
-  parsnip::set_model_engine("figs_tree", mode = "classification", engine = "figsr")
+  # Register model and modes
+  parsnip::set_new_model("figs_tree")
+  parsnip::set_model_mode("figs_tree", mode = "regression")
+  parsnip::set_model_mode("figs_tree", mode = "classification")
   
-  parsnip::set_dependency("figs_tree", engine = "figsr", pkg = "figsr")
+  parsnip::set_model_engine("figs_tree", mode = "regression", eng = "figsr")
+  parsnip::set_model_engine("figs_tree", mode = "classification", eng = "figsr")
+  
+  parsnip::set_dependency("figs_tree", eng = "figsr", pkg = "figsr")
+  
+  parsnip::set_encoding(
+    model = "figs_tree",
+    eng = "figsr",
+    mode = "regression",
+    options = list(
+      predictor_indicators = "none",
+      compute_intercept = FALSE,
+      remove_intercept = FALSE,
+      allow_sparse_x = FALSE
+    )
+  )
+  
+  parsnip::set_encoding(
+    model = "figs_tree",
+    eng = "figsr",
+    mode = "classification",
+    options = list(
+      predictor_indicators = "none",
+      compute_intercept = FALSE,
+      remove_intercept = FALSE,
+      allow_sparse_x = FALSE
+    )
+  )
   
   # Register arguments
   parsnip::set_model_arg(
@@ -89,10 +117,10 @@ make_figs_tree_parsnip <- function() {
     eng = "figsr",
     mode = "regression",
     value = list(
-      interface = "formula",
-      protect = c("formula", "data"),
+      interface = "data.frame",
+      protect = c("x", "y"),
       func = c(pkg = "figsr", fun = "fit_figs"),
-      defaults = list()
+      defaults = list(mode = "regression")
     )
   )
   
@@ -102,10 +130,10 @@ make_figs_tree_parsnip <- function() {
     eng = "figsr",
     mode = "classification",
     value = list(
-      interface = "formula",
-      protect = c("formula", "data"),
+      interface = "data.frame",
+      protect = c("x", "y"),
       func = c(pkg = "figsr", fun = "fit_figs"),
-      defaults = list()
+      defaults = list(mode = "classification")
     )
   )
   
@@ -165,20 +193,32 @@ make_figs_tree_parsnip <- function() {
 }
 
 #' Fit S3 generic for Parsnip interface
-#' @param formula A formula.
-#' @param data A data frame.
+#' @param formula A formula or predictor matrix/data.frame.
+#' @param data A data frame or outcome vector.
+#' @param x Predictors matrix/data.frame.
+#' @param y Outcome vector.
+#' @param max_splits Integer. Maximum splits.
+#' @param max_trees Integer. Maximum trees.
+#' @param min_n Integer. Minimum node size.
+#' @param mode Character. "regression" or "classification".
 #' @param ... Additional arguments.
 #' @export
-fit_figs <- function(formula, data, ...) {
-  UseMethod("fit_figs")
-}
-
-#' @export
-fit_figs.default <- function(formula, data, ...) {
-  fit_figs.formula(formula = formula, data = data, ...)
-}
-
-#' @export
-fit_figs.formula <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", ...) {
-  figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...)
+fit_figs <- function(formula = NULL, data = NULL, x = NULL, y = NULL, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", ...) {
+  if (!is.null(formula) && !is.null(data)) {
+    return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
+  }
+  
+  if (!is.null(x) && !is.null(y)) {
+    df <- as.data.frame(x)
+    df$.outcome <- y
+    f <- stats::as.formula(".outcome ~ .")
+    return(figs(formula = f, data = df, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
+  }
+  
+  # Fallback if positional args provided
+  if (inherits(formula, "formula") && is.data.frame(data)) {
+    return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
+  }
+  
+  stop("Invalid input to fit_figs: expected formula and data, or x and y.", call. = FALSE)
 }
