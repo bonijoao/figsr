@@ -6,7 +6,7 @@
 
 **figsr** is an R implementation of **Fast Interpretable Greedy-Tree Sums ('FIGS')**, developed by researchers at UC Berkeley and Stanford (*Tan et al., PNAS 2022*, <https://doi.org/10.1073/pnas.2310151122>).
 
-Unlike standard single decision trees ('CART') which suffer from inductive bias against additive structures and repeat subtrees, `figsr` greedily grows a sum of shallow decision trees ($\hat{f}(x) = \sum_k \hat{f}_k(x)$). It achieves prediction accuracy close to random forests or gradient boosting while remaining human-interpretable with concise decision rules.
+Unlike standard single decision trees ('CART') which suffer from inductive bias against additive structures and repeat subtrees, `figsr` greedily grows a sum of shallow decision trees ( $\hat{f}(x) = \sum_k \hat{f}_k(x)$ ). It achieves prediction accuracy close to random forests or gradient boosting while remaining human-interpretable with concise decision rules.
 
 ---
 
