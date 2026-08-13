@@ -9,7 +9,7 @@ Authors@R: c(
     person("Pedro", "Mambelli Fernandes", role = c("aut", "cph"),
            comment = c(ORCID = "0009-0001-1695-279X")),
     person("João Vitor", "Andrade Alves de Souza", email = "joaovitor.alvez16@gmail.com",
-           role = c("aut", "cph"))
+           role = c("aut", "cph"), comment = c(ORCID = "0009-0006-2780-318X"))
   )
 Description: Flexible, interpretable machine learning algorithm for additive
     tree sums ('FIGS'). Fits a sum of shallow 'Classification and Regression
