@@ -4,9 +4,10 @@ Version: 0.1.0
 Authors@R: c(
     person("João Paulo", "Assis Bonifácio", email = "jpab.27@hotmail.com", 
            role = c("aut", "cre"), comment = c(ORCID = "0009-0009-2335-8391")),
-    person("Geraldo Magela", "da Cruz Pereira", role = "aut", 
-           comment = c(ORCID = "0000-0001-6280-4870")),
-    person("Pedro", "Mambelli Fernandes", role = "aut"),
+    person("Geraldo Magela", "da Cruz Pereira", email = "geraldo.pereira@ufla.br",
+           role = "aut", comment = c(ORCID = "0000-0001-6280-4870")),
+    person("Pedro", "Mambelli Fernandes", role = "aut",
+           comment = c(ORCID = "0009-0001-1695-279X")),
     person("João Vitor", "Andrade Alves de Souza", email = "joaovitor.alvez16@gmail.com",
            role = "aut")
   )
