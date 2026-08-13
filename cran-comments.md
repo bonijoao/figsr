@@ -10,14 +10,22 @@
 
 0 errors | 0 warnings | 0 notes
 
-With `_R_CHECK_CRAN_INCOMING_` enabled there is one NOTE:
+On win-builder (R-devel) there is one NOTE:
 
 ```
 Maintainer: 'Joao Paulo Assis Bonifacio <jpab.27@hotmail.com>'
+
 New submission
+
+Possibly misspelled words in DESCRIPTION:
+  al (12:26)
+  et (12:23)
 ```
 
 This is the first submission of this package to CRAN.
+
+The flagged words are the abbreviation "et al." in the reference to the paper
+describing the implemented method; both are spelled correctly.
 
 ## Notes for the reviewer
 

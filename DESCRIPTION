@@ -8,10 +8,14 @@ Authors@R: c(
            comment = c(ORCID = "0000-0001-6280-4870")),
     person("Pedro", "Mambelli Fernandes", role = "aut")
   )
-Description: Flexible, interpretable machine learning algorithm for additive tree 
-    sums ('FIGS', Tan et al., 2023, <doi:10.1073/pnas.2310151122>). Fits a sum of 
-    shallow decision trees ('CART') by greedily minimizing residual impurity. 
-    Includes seamless integration with 'parsnip' and 'tidymodels' workflows.
+Description: Flexible, interpretable machine learning algorithm for additive
+    tree sums ('FIGS'). Fits a sum of shallow 'Classification and Regression
+    Trees' ('CART') by greedily minimizing residual impurity, growing a new
+    tree or deepening an existing one at each step, whichever reduces the
+    residuals most. Supports regression and two-class classification, variable
+    importance, bootstrap ensembling and seamless integration with 'parsnip'
+    and 'tidymodels' workflows. The method is described in Tan et al. (2023)
+    <doi:10.1073/pnas.2310151122>.
 License: MIT + file LICENSE
 URL: https://github.com/bonijoao/figsr
 BugReports: https://github.com/bonijoao/figsr/issues
