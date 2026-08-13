@@ -1,10 +1,18 @@
 #' Print Method for `figsr_fit` Models
 #'
 #' @param x A `figsr_fit` object.
-#' @param ... Additional arguments.
+#' @param ... Additional arguments, currently ignored.
 #'
+#' @return `x`, invisibly. Called for the side effect of printing a summary of
+#'   the fitted tree sum to the console.
 #' @export
 #' @method print figsr_fit
+#'
+#' @examples
+#' set.seed(42)
+#' df <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+#' df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+#' print(figs(y ~ x1 + x2, data = df, max_splits = 3))
 print.figsr_fit <- function(x, ...) {
   cat("========================================================\n")
   cat("  FIGS: Fast Interpretable Greedy-Tree Sums Model\n")
@@ -25,10 +33,18 @@ print.figsr_fit <- function(x, ...) {
 #' `summary.figsr_fit()` prints human-readable decision rules for each tree in the sum.
 #'
 #' @param object A `figsr_fit` object.
-#' @param ... Additional arguments.
+#' @param ... Additional arguments, currently ignored.
 #'
+#' @return `object`, invisibly. Called for the side effect of printing the
+#'   IF-THEN decision rules of each tree to the console.
 #' @export
 #' @method summary figsr_fit
+#'
+#' @examples
+#' set.seed(42)
+#' df <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+#' df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+#' summary(figs(y ~ x1 + x2, data = df, max_splits = 3))
 summary.figsr_fit <- function(object, ...) {
   cat("========================================================\n")
   cat("  FIGS Model Summary: Tree Sum Decision Rules\n")
@@ -52,7 +68,7 @@ summary.figsr_fit <- function(object, ...) {
 # Recursive helper to print tree rules
 print_tree_rules <- function(node, tree, indent = "") {
   if (node$is_leaf) {
-    cat(sprintf("%s└─ Leaf Value: %+.4f\n", indent, node$value))
+    cat(sprintf("%s`-- Leaf Value: %+.4f\n", indent, node$value))
     return()
   }
   
@@ -64,9 +80,9 @@ print_tree_rules <- function(node, tree, indent = "") {
     cond_right <- sprintf("IF %s >  %.3f", node$feature, node$split_val)
   }
   
-  cat(sprintf("%s├─ %s\n", indent, cond_left))
-  print_tree_rules(tree[[node$left_child]], tree, indent = paste0(indent, "│  "))
-  
-  cat(sprintf("%s└─ %s\n", indent, cond_right))
+  cat(sprintf("%s|-- %s\n", indent, cond_left))
+  print_tree_rules(tree[[node$left_child]], tree, indent = paste0(indent, "|   "))
+
+  cat(sprintf("%s`-- %s\n", indent, cond_right))
   print_tree_rules(tree[[node$right_child]], tree, indent = paste0(indent, "   "))
 }

@@ -36,12 +36,7 @@ figs_tree <- function(mode = "regression", max_splits = NULL, max_trees = NULL, 
   )
 }
 
-#' @export
-figs_tree.default <- function(mode = "regression", max_splits = NULL, max_trees = NULL, min_n = NULL) {
-  figs_tree(mode = mode, max_splits = max_splits, max_trees = max_trees, min_n = min_n)
-}
-
-# Register parsip engine environment on load
+# Register the parsnip engine when the namespace is loaded
 .onLoad <- function(libname, pkgname) {
   make_figs_tree_parsnip()
 }
@@ -192,17 +187,32 @@ make_figs_tree_parsnip <- function() {
   )
 }
 
-#' Fit S3 generic for Parsnip interface
-#' @param formula A formula or predictor matrix/data.frame.
-#' @param data A data frame or outcome vector.
-#' @param x Predictors matrix/data.frame.
-#' @param y Outcome vector.
-#' @param max_splits Integer. Maximum splits.
-#' @param max_trees Integer. Maximum trees.
-#' @param min_n Integer. Minimum node size.
-#' @param mode Character. "regression" or "classification".
-#' @param ... Additional arguments.
+#' Fitting Bridge for the Parsnip Interface
+#'
+#' @description
+#' `fit_figs()` is the function `parsnip` calls when fitting a [figs_tree()]
+#' specification with the `"figsr"` engine. It accepts either the formula
+#' interface or the `x`/`y` interface and forwards to [figs()]. Users normally
+#' call [figs()] or `fit()` instead.
+#'
+#' @param formula A formula specifying outcome and predictors.
+#' @param data A data frame containing the training data.
+#' @param x A data frame or matrix of predictors.
+#' @param y An outcome vector.
+#' @param max_splits Integer. Maximum total number of splits across all trees.
+#' @param max_trees Integer. Maximum number of trees in the sum.
+#' @param min_n Integer. Minimum number of observations in a node to split.
+#' @param mode Character. Either `"regression"` or `"classification"`.
+#' @param ... Additional arguments passed to [figs()].
+#'
+#' @return An object of class `figsr_fit`.
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' df <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+#' df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+#' fit_figs(x = df[, c("x1", "x2")], y = df$y, max_splits = 3)
 fit_figs <- function(formula = NULL, data = NULL, x = NULL, y = NULL, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", ...) {
   if (!is.null(formula) && !is.null(data)) {
     return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))

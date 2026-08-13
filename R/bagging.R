@@ -64,7 +64,7 @@ predict.bagging_figs_fit <- function(object, new_data, ...) {
   all_preds <- vector("list", n_models)
   
   for (b in seq_len(n_models)) {
-    all_preds[[b]] <- predict(object$models[[b]], new_data = new_data, ...)
+    all_preds[[b]] <- stats::predict(object$models[[b]], new_data = new_data, ...)
   }
   
   # Average predictions

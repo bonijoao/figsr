@@ -126,19 +126,16 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
     sp <- best_action$split
     
     if (best_action$type == "new_tree") {
-      root_node <- list(
+      root_node <- make_node(
         id = 1, is_leaf = FALSE, feature = sp$var_name, is_factor = sp$is_factor,
-        split_val = sp$split_val, left_child = 2, right_child = 3, value = 0, sample_indices = seq_len(n)
+        split_val = sp$split_val, left_child = 2, right_child = 3, gain = sp$gain,
+        value = 0, sample_indices = seq_len(n)
       )
-      left_node <- list(
-        id = 2, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
-        split_val = NULL, left_child = NULL, right_child = NULL,
-        value = mean(residuals[sp$idx_left]), sample_indices = sp$idx_left
+      left_node <- make_node(
+        id = 2, value = mean(residuals[sp$idx_left]), sample_indices = sp$idx_left
       )
-      right_node <- list(
-        id = 3, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
-        split_val = NULL, left_child = NULL, right_child = NULL,
-        value = mean(residuals[sp$idx_right]), sample_indices = sp$idx_right
+      right_node <- make_node(
+        id = 3, value = mean(residuals[sp$idx_right]), sample_indices = sp$idx_right
       )
       trees[[length(trees) + 1]] <- list(root_node, left_node, right_node)
     } else {
@@ -146,7 +143,7 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
       n_idx <- best_action$node_idx
       tree <- trees[[t_idx]]
       parent <- tree[[n_idx]]
-      
+
       next_id <- length(tree) + 1
       parent$is_leaf <- FALSE
       parent$feature <- sp$var_name
@@ -154,14 +151,15 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
       parent$split_val <- sp$split_val
       parent$left_child <- next_id
       parent$right_child <- next_id + 1
-      
-      left_node <- list(
-        id = next_id, is_leaf = TRUE, value = mean(residuals[sp$idx_left]), sample_indices = sp$idx_left
+      parent$gain <- sp$gain
+
+      left_node <- make_node(
+        id = next_id, value = mean(residuals[sp$idx_left]), sample_indices = sp$idx_left
       )
-      right_node <- list(
-        id = next_id + 1, is_leaf = TRUE, value = mean(residuals[sp$idx_right]), sample_indices = sp$idx_right
+      right_node <- make_node(
+        id = next_id + 1, value = mean(residuals[sp$idx_right]), sample_indices = sp$idx_right
       )
-      
+
       tree[[n_idx]] <- parent
       tree[[next_id]] <- left_node
       tree[[next_id + 1]] <- right_node
@@ -191,6 +189,25 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
   
   class(res) <- "figsr_fit"
   return(res)
+}
+
+# Constructor guaranteeing every node carries the same field set, so consumers
+# never have to test for missing components.
+make_node <- function(id, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
+                      split_val = NULL, left_child = NULL, right_child = NULL,
+                      gain = 0, value = 0, sample_indices = integer(0)) {
+  list(
+    id = id,
+    is_leaf = is_leaf,
+    feature = feature,
+    is_factor = is_factor,
+    split_val = split_val,
+    left_child = left_child,
+    right_child = right_child,
+    gain = gain,
+    value = value,
+    sample_indices = sample_indices
+  )
 }
 
 # Helper to find best split for a leaf subset
