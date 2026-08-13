@@ -1,10 +1,8 @@
 ## Test environments
 
 * Local Windows 11, R 4.5.3
-* win-builder (devel)
-* macOS builder (release)
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1), macOS-latest (release),
-  windows-latest (release)
+* win-builder, R-devel (2026-08-12 r90394 ucrt)
+* GitHub Actions, ubuntu-latest, R release
 
 ## R CMD check results
 
