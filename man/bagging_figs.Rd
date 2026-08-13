@@ -25,9 +25,10 @@ bagging_figs(
 
 \item{min_n}{Integer. Minimum node size. Default is 5.}
 
-\item{mode}{Character. `"regression"` or `"classification"`.}
+\item{mode}{Character. `"regression"` or `"classification"`; classification
+supports two-class outcomes only.}
 
-\item{...}{Additional arguments.}
+\item{...}{Additional arguments passed to [figs()].}
 }
 \value{
 An object of class `bagging_figs_fit`.

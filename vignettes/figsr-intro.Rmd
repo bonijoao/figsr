@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 ## Introduction to FIGS
 
-**figsr** implements Fast Interpretable Greedy-Tree Sums ('FIGS') (*Tan et al., PNAS 2022*). FIGS fits a sum of shallow decision trees ($\hat{f}(x) = \sum_k \hat{f}_k(x)$) by greedily minimizing residual impurity.
+**figsr** implements Fast Interpretable Greedy-Tree Sums ('FIGS') (*Tan et al., PNAS 2023*). FIGS fits a sum of shallow decision trees ($\hat{f}(x) = \sum_k \hat{f}_k(x)$) by greedily minimizing residual impurity.
 
 ---
 

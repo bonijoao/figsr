@@ -25,7 +25,9 @@ figs(
 
 \item{min_n}{Integer. Minimum number of observations required in a node to split. Default is 5.}
 
-\item{mode}{Character. Either `"regression"` or `"classification"`. Default is `"regression"`.}
+\item{mode}{Character. Either `"regression"` or `"classification"`. Only
+two-class outcomes are supported in classification mode. Default is
+`"regression"`.}
 
 \item{...}{Additional arguments.}
 }
@@ -34,7 +36,19 @@ An object of class `figsr_fit` containing fitted tree structures, predictions, a
 }
 \description{
 `figs()` fits a Fast Interpretable Greedy-Tree Sums model for regression or
-classification tasks.
+binary classification tasks.
+}
+\details{
+Trees are grown one split at a time. At each step every leaf of every existing
+tree, plus the root of a possible new tree, competes for the split that most
+reduces the residual sum of squares; the single best candidate is taken and
+the residuals are recomputed against the whole sum. Growth stops at
+`max_splits` splits or when no candidate improves the fit.
+
+Classification is limited to two classes. A factor outcome with more than two
+levels raises an error. The binary case is fitted on the 0/1 encoding of the
+outcome using the same sum-of-squares criterion, and the raw score is mapped
+to a probability with the logistic function at prediction time.
 }
 \examples{
 set.seed(123)

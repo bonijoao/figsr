@@ -9,8 +9,9 @@
 #' @param n_estimators Integer. Number of bootstrap FIGS models to train. Default is 10.
 #' @param max_splits Integer. Maximum splits per individual FIGS model. Default is 6.
 #' @param min_n Integer. Minimum node size. Default is 5.
-#' @param mode Character. `"regression"` or `"classification"`.
-#' @param ... Additional arguments.
+#' @param mode Character. `"regression"` or `"classification"`; classification
+#'   supports two-class outcomes only.
+#' @param ... Additional arguments passed to [figs()].
 #'
 #' @return An object of class `bagging_figs_fit`.
 #' @export

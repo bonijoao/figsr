@@ -31,7 +31,8 @@ fit_figs(
 
 \item{min_n}{Integer. Minimum number of observations in a node to split.}
 
-\item{mode}{Character. Either `"regression"` or `"classification"`.}
+\item{mode}{Character. Either `"regression"` or `"classification"`;
+classification supports two-class outcomes only.}
 
 \item{...}{Additional arguments passed to [figs()].}
 }

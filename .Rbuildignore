@@ -8,3 +8,4 @@
 ^CRAN-SUBMISSION$
 ^docs$
 ^LICENSE\.md$
+^cran-comments\.md$

@@ -5,7 +5,9 @@
 #' the `parsnip` and `tidymodels` ecosystem.
 #'
 #' @param mode A single character string for the prediction outcome mode:
-#'   `"regression"` or `"classification"`.
+#'   `"regression"` or `"classification"`. Classification supports two-class
+#'   outcomes only; a factor with more than two levels raises an error at fit
+#'   time.
 #' @param max_splits An integer for the maximum total splits across all trees. Default is 10.
 #' @param max_trees An integer for the maximum number of trees. Default is NULL.
 #' @param min_n An integer for the minimum number of data points in a node to split. Default is 5.
@@ -202,7 +204,8 @@ make_figs_tree_parsnip <- function() {
 #' @param max_splits Integer. Maximum total number of splits across all trees.
 #' @param max_trees Integer. Maximum number of trees in the sum.
 #' @param min_n Integer. Minimum number of observations in a node to split.
-#' @param mode Character. Either `"regression"` or `"classification"`.
+#' @param mode Character. Either `"regression"` or `"classification"`;
+#'   classification supports two-class outcomes only.
 #' @param ... Additional arguments passed to [figs()].
 #'
 #' @return An object of class `figsr_fit`.

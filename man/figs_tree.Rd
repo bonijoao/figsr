@@ -13,7 +13,9 @@ figs_tree(
 }
 \arguments{
 \item{mode}{A single character string for the prediction outcome mode:
-`"regression"` or `"classification"`.}
+`"regression"` or `"classification"`. Classification supports two-class
+outcomes only; a factor with more than two levels raises an error at fit
+time.}
 
 \item{max_splits}{An integer for the maximum total splits across all trees. Default is 10.}
 
