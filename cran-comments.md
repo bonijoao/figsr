@@ -16,14 +16,17 @@ Maintainer: 'Joao Paulo Assis Bonifacio <jpab.27@hotmail.com>'
 New submission
 
 Possibly misspelled words in DESCRIPTION:
-  al (12:26)
-  et (12:23)
+  al (20:67)
+  ensembling (19:27)
+  et (20:64)
 ```
 
 This is the first submission of this package to CRAN.
 
-The flagged words are the abbreviation "et al." in the reference to the paper
-describing the implemented method; both are spelled correctly.
+The flagged words are spelled correctly. "et" and "al" come from the
+abbreviation "et al." in the reference to the paper describing the implemented
+method, and "ensembling" is the standard term for combining models into an
+ensemble, which is what bagging_figs() does.
 
 ## Notes for the reviewer
 
