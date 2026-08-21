@@ -2,13 +2,17 @@
 
 * Local Windows 11, R 4.5.3
 * win-builder, R-devel (2026-08-12 r90394 ucrt)
-* GitHub Actions, ubuntu-latest, R release
+* GitHub Actions: macOS, Windows and Ubuntu, R release; Ubuntu, R-devel and
+  R oldrel-1
+* R-hub v2: linux, windows, macos, macos-arm64 (R-devel), ubuntu-next and
+  nosuggests
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
 
-On win-builder (R-devel) there is one NOTE:
+The only NOTE is the one CRAN's incoming feasibility check raises for a first
+submission. On win-builder (R-devel) it reads:
 
 ```
 Maintainer: 'Joao Paulo Assis Bonifacio <jpab.27@hotmail.com>'
