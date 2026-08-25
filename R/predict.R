@@ -53,8 +53,12 @@ predict_figs <- function(object, new_data, type = "numeric", ...) {
   if (object$mode == "regression" || type == "numeric") {
     res <- tibble::tibble(.pred = raw_preds)
   } else if (object$mode == "classification") {
-    # Logistic sigmoid mapping for binary probabilities
-    probs_class2 <- 1 / (1 + exp(-raw_preds))
+    # The engine encodes the outcome as 0/1 and fits squared error on the
+    # running residuals, so the sum of leaf values already estimates
+    # P(y = second level). Residual fitting can push that sum slightly outside
+    # the unit interval, so it is clamped rather than passed through a link.
+    eps <- 1e-6
+    probs_class2 <- pmin(pmax(raw_preds, eps), 1 - eps)
     probs_class1 <- 1 - probs_class2
     
     classes <- object$classes

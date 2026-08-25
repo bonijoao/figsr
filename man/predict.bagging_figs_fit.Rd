@@ -4,12 +4,15 @@
 \alias{predict.bagging_figs_fit}
 \title{Predict Method for `bagging_figs_fit` Models}
 \usage{
-\method{predict}{bagging_figs_fit}(object, new_data, ...)
+\method{predict}{bagging_figs_fit}(object, new_data, type = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted `bagging_figs_fit` object.}
 
 \item{new_data}{A data frame of predictor values.}
+
+\item{type}{Character. For classification, either `"class"` (the default) or
+`"prob"`; ignored for regression, which always returns `.pred`.}
 
 \item{...}{Additional arguments.}
 }

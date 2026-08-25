@@ -55,32 +55,52 @@ bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n
 #'
 #' @param object A fitted `bagging_figs_fit` object.
 #' @param new_data A data frame of predictor values.
+#' @param type Character. For classification, either `"class"` (the default) or
+#'   `"prob"`; ignored for regression, which always returns `.pred`.
 #' @param ... Additional arguments.
 #'
 #' @return A `tibble` containing averaged ensemble predictions.
 #' @export
 #' @method predict bagging_figs_fit
-predict.bagging_figs_fit <- function(object, new_data, ...) {
+predict.bagging_figs_fit <- function(object, new_data, type = NULL, ...) {
   n_models <- object$n_estimators
-  all_preds <- vector("list", n_models)
-  
-  for (b in seq_len(n_models)) {
-    all_preds[[b]] <- stats::predict(object$models[[b]], new_data = new_data, ...)
-  }
-  
-  # Average predictions
+
   if (object$mode == "regression") {
+    all_preds <- vector("list", n_models)
+    for (b in seq_len(n_models)) {
+      all_preds[[b]] <- stats::predict(object$models[[b]], new_data = new_data,
+                                       type = "numeric", ...)
+    }
     mat <- do.call(cbind, lapply(all_preds, function(df) df$.pred))
-    mean_preds <- rowMeans(mat)
-    res <- tibble::tibble(.pred = mean_preds)
-  } else {
-    mat <- do.call(cbind, lapply(all_preds, function(df) as.numeric(df$.pred_class) - 1))
-    mean_prob <- rowMeans(mat)
-    class_levels <- object$models[[1]]$classes
-    if (is.null(class_levels)) class_levels <- c("0", "1")
-    pred_class <- ifelse(mean_prob >= 0.5, class_levels[2], class_levels[1])
-    res <- tibble::tibble(.pred_class = factor(pred_class, levels = class_levels))
+    return(tibble::tibble(.pred = rowMeans(mat)))
   }
-  
-  return(res)
+
+  if (is.null(type)) type <- "class"
+
+  class_levels <- object$models[[1]]$classes
+  if (is.null(class_levels)) class_levels <- c("0", "1")
+
+  # Average member probabilities, not hard labels: averaging labels discards
+  # the confidence of each member and cannot produce a probability output.
+  all_probs <- vector("list", n_models)
+  for (b in seq_len(n_models)) {
+    pb <- stats::predict(object$models[[b]], new_data = new_data,
+                         type = "prob", ...)
+    all_probs[[b]] <- pb[[paste0(".pred_", class_levels[2])]]
+  }
+  mean_prob <- rowMeans(do.call(cbind, all_probs))
+
+  if (type == "class") {
+    pred_class <- ifelse(mean_prob >= 0.5, class_levels[2], class_levels[1])
+    return(tibble::tibble(.pred_class = factor(pred_class, levels = class_levels)))
+  }
+
+  if (type == "prob") {
+    res_list <- list()
+    res_list[[paste0(".pred_", class_levels[1])]] <- 1 - mean_prob
+    res_list[[paste0(".pred_", class_levels[2])]] <- mean_prob
+    return(tibble::as_tibble(res_list))
+  }
+
+  stop("Unsupported prediction type for classification.", call. = FALSE)
 }
