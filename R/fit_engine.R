@@ -167,11 +167,17 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
       parent$right_child <- next_id + 1
       parent$gain <- sp$gain
 
+      # `residuals` are net of the value the parent leaf was already
+      # contributing, while `predict_trees()` reads only the leaf it lands on.
+      # The children must therefore carry the parent's contribution as well.
+      base_value <- parent$value
       left_node <- make_node(
-        id = next_id, value = mean(residuals[sp$idx_left]), sample_indices = sp$idx_left
+        id = next_id, value = base_value + mean(residuals[sp$idx_left]),
+        sample_indices = sp$idx_left
       )
       right_node <- make_node(
-        id = next_id + 1, value = mean(residuals[sp$idx_right]), sample_indices = sp$idx_right
+        id = next_id + 1, value = base_value + mean(residuals[sp$idx_right]),
+        sample_indices = sp$idx_right
       )
 
       tree[[n_idx]] <- parent
