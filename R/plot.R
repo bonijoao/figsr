@@ -7,8 +7,10 @@
 #'
 #' @param x A fitted `figsr_fit` model object.
 #' @param tree_idx Optional integer vector specifying indices of trees to plot. Default is `NULL` (plots all trees).
-#' @param style Character string specifying the visual style: `"scientific"` (default, scientific/editorial notation), `"modern"` (rounded pastel boxes), or `"classic"` (high-contrast minimalist statistical style).
-#' @param ... Additional graphical parameters passed to base graphics.
+#' @param style Character string specifying the visual style: `"scientific"`
+#'   (default, scientific/editorial notation), `"modern"` (rounded pastel boxes),
+#'   or `"classic"` (high-contrast minimalist statistical style).
+#' @param ... Additional arguments, currently ignored.
 #'
 #' @return Invisible `NULL`.
 #' @export
@@ -21,14 +23,21 @@
 #' plot(fit)
 #' plot(fit, style = "scientific")
 #' plot(fit, tree_idx = 1)
-plot.figsr_fit <- function(x, tree_idx = NULL, style = "scientific", ...) {
+plot.figsr_fit <- function(x, tree_idx = NULL, style = c("scientific", "modern", "classic"), ...) {
+  style <- match.arg(style)
+
   if (length(x$trees) == 0) {
     message("Model contains no trees to plot.")
     return(invisible(NULL))
   }
-  
+
   target_trees <- if (is.null(tree_idx)) seq_along(x$trees) else tree_idx
-  target_trees <- target_trees[target_trees >= 1 & target_trees <= length(x$trees)]
+  # `NA` and fractional indices would otherwise reach `x$trees[[.]]` and fail
+  # with an internal error instead of the message below.
+  target_trees <- suppressWarnings(as.integer(target_trees))
+  target_trees <- target_trees[!is.na(target_trees) &
+                                 target_trees >= 1 &
+                                 target_trees <= length(x$trees)]
   
   if (length(target_trees) == 0) {
     stop("Invalid `tree_idx` specified.", call. = FALSE)
@@ -180,7 +189,8 @@ plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "
       if (style == "scientific") {
         lbl <- sprintf("dy = %s%.2f", sign_str, nd$val)
       } else if (style == "classic") {
-        lbl <- sprintf("y = %.2f", nd$val)
+        # A leaf holds this tree's contribution to the sum, not the prediction.
+        lbl <- sprintf("dy = %s%.2f", sign_str, nd$val)
       } else {
         lbl <- sprintf("%s%.2f", sign_str, nd$val)
       }

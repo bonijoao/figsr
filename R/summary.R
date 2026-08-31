@@ -20,7 +20,10 @@ print.figsr_fit <- function(x, ...) {
   cat(sprintf("Mode              : %s\n", x$mode))
   cat(sprintf("Total Trees       : %d\n", length(x$trees)))
   cat(sprintf("Total Splits      : %d / %d (max_splits)\n", x$total_splits, x$max_splits))
-  cat(sprintf("Predictors Used   : %s\n", paste(x$feature_names, collapse = ", ")))
+  cat(sprintf("Predictors        : %s\n", paste(x$feature_names, collapse = ", ")))
+  used <- split_features(x$trees)
+  cat(sprintf("Used in Splits    : %s\n",
+              if (length(used) == 0) "none" else paste(used, collapse = ", ")))
   cat("========================================================\n\n")
   cat("Use `summary(fit)` to display detailed decision rules.\n")
   cat("Use `plot(fit)` to visualize decision tree structures.\n")
@@ -50,6 +53,13 @@ summary.figsr_fit <- function(object, ...) {
   cat("  FIGS Model Summary: Tree Sum Decision Rules\n")
   cat("========================================================\n\n")
   
+  if (object$mode == "classification") {
+    cat(sprintf(
+      "Leaf values are contributions to P(y = \"%s\"); they sum across trees.\n\n",
+      object$classes[2]
+    ))
+  }
+
   if (length(object$trees) == 0) {
     cat("No splits performed (empty tree model).\n")
     return(invisible(object))
@@ -84,5 +94,16 @@ print_tree_rules <- function(node, tree, indent = "") {
   print_tree_rules(tree[[node$left_child]], tree, indent = paste0(indent, "|   "))
 
   cat(sprintf("%s`-- %s\n", indent, cond_right))
-  print_tree_rules(tree[[node$right_child]], tree, indent = paste0(indent, "   "))
+  print_tree_rules(tree[[node$right_child]], tree, indent = paste0(indent, "    "))
+}
+
+# The predictors that actually carry a split, in the order they were first used.
+split_features <- function(trees) {
+  used <- character(0)
+  for (tree in trees) {
+    for (node in tree) {
+      if (!node$is_leaf) used <- c(used, node$feature)
+    }
+  }
+  unique(used)
 }
