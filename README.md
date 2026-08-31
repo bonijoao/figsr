@@ -74,6 +74,3 @@ head(preds)
 
 ---
 
-## License
-
-MIT License (c) 2026 João Paulo Assis Bonifácio, Geraldo Magela da Cruz Pereira, Pedro Mambelli Fernandes, João Vitor Andrade Alves de Souza.
