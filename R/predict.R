@@ -37,24 +37,59 @@ predict.figsr_fit <- function(object, new_data, type = NULL, ...) {
 #'
 #' @return A `tibble` of predictions.
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' df <- data.frame(x1 = rnorm(60))
+#' df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+#' fit <- figs(y ~ x1, data = df, max_splits = 3)
+#' predict_figs(fit, new_data = df, type = "numeric")
 predict_figs <- function(object, new_data, type = "numeric", ...) {
-  new_df <- as.data.frame(new_data)
-  
-  # Ensure all feature names exist in new_data
-  missing_vars <- setdiff(object$feature_names, colnames(new_df))
-  if (length(missing_vars) > 0) {
-    stop(paste("The following predictor variables are missing in `new_data`:", 
-               paste(missing_vars, collapse = ", ")), call. = FALSE)
+  valid_types <- if (object$mode == "classification") {
+    c("class", "prob", "numeric")
+  } else {
+    "numeric"
   }
-  
-  X_new <- new_df[, object$feature_names, drop = FALSE]
-  raw_preds <- predict_trees(object$trees, X_new)
+  if (length(type) != 1 || !type %in% valid_types) {
+    stop(paste0("`type` must be one of ",
+                paste0("\"", valid_types, "\"", collapse = ", "),
+                " for a ", object$mode, " model."), call. = FALSE)
+  }
+
+  new_df <- as.data.frame(new_data)
+
+  # Rebuild the model frame from the stored terms so that transformed terms
+  # such as `log(x)` are recomputed instead of being looked up as column names.
+  if (!is.null(object$terms)) {
+    predictors <- stats::delete.response(object$terms)
+    missing_vars <- setdiff(all.vars(predictors), colnames(new_df))
+    if (length(missing_vars) > 0) {
+      stop(paste("The following predictor variables are missing in `new_data`:",
+                 paste(missing_vars, collapse = ", ")), call. = FALSE)
+    }
+    X_new <- stats::model.frame(predictors, new_df, na.action = stats::na.pass,
+                                xlev = object$xlevels)
+  } else {
+    missing_vars <- setdiff(object$feature_names, colnames(new_df))
+    if (length(missing_vars) > 0) {
+      stop(paste("The following predictor variables are missing in `new_data`:",
+                 paste(missing_vars, collapse = ", ")), call. = FALSE)
+    }
+    X_new <- new_df[, object$feature_names, drop = FALSE]
+  }
+  # Fits made before the intercept was introduced carry no such element; they
+  # always had at least one tree, where the intercept is zero anyway.
+  intercept <- if (is.null(object$intercept)) 0 else object$intercept
+  raw_preds <- intercept + predict_trees(object$trees, X_new)
   
   if (object$mode == "regression" || type == "numeric") {
     res <- tibble::tibble(.pred = raw_preds)
   } else if (object$mode == "classification") {
-    # Logistic sigmoid mapping for binary probabilities
-    probs_class2 <- 1 / (1 + exp(-raw_preds))
+    # The engine encodes the outcome as 0/1 and fits squared error on the
+    # running residuals, so the sum of leaf values already estimates
+    # P(y = second level). Residual fitting can push that sum slightly outside
+    # the unit interval, so it is clamped rather than passed through a link.
+    probs_class2 <- pmin(pmax(raw_preds, PROB_EPS), 1 - PROB_EPS)
     probs_class1 <- 1 - probs_class2
     
     classes <- object$classes
@@ -80,3 +115,7 @@ predict_figs <- function(object, new_data, type = "numeric", ...) {
   
   return(res)
 }
+
+# Residual fitting can push the summed leaf values slightly outside the unit
+# interval; probabilities are clamped this far from 0 and 1.
+PROB_EPS <- 1e-6

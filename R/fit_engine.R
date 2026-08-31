@@ -13,8 +13,18 @@
 #'
 #' Classification is limited to two classes. A factor outcome with more than two
 #' levels raises an error. The binary case is fitted on the 0/1 encoding of the
-#' outcome using the same sum-of-squares criterion, and the raw score is mapped
-#' to a probability with the logistic function at prediction time.
+#' outcome using the same sum-of-squares criterion, so the sum of the leaf values
+#' already estimates the probability of the second level; it is clamped to the
+#' unit interval at prediction time rather than passed through a link function.
+#'
+#' Predictors are used exactly as supplied: numeric features are split at
+#' midpoints between sorted unique values, capped at 30 sample quantiles, and
+#' factor features are split by enumerating subsets of their levels, which is
+#' skipped above 10 levels. A factor level that was not seen in training raises
+#' an error at prediction time, as it does for the other model-frame based
+#' fitting functions in `stats`. Rows with a missing value in a predictor are
+#' dropped at fit time by [stats::model.frame()] and raise an error at
+#' prediction time.
 #'
 #' @param formula A formula specifying outcome and predictor variables.
 #' @param data A data frame containing training data.
@@ -24,7 +34,12 @@
 #' @param mode Character. Either `"regression"` or `"classification"`. Only
 #'   two-class outcomes are supported in classification mode. Default is
 #'   `"regression"`.
-#' @param ... Additional arguments.
+#' @param subset An optional vector selecting the rows of `data` to fit on,
+#'   passed to [stats::model.frame()].
+#' @param na.action A function describing what to do with missing values, passed
+#'   to [stats::model.frame()]. Defaults to [stats::na.omit()].
+#' @param ... Additional arguments, currently ignored. Case weights are not
+#'   supported and passing `weights` raises an error.
 #'
 #' @return An object of class `figsr_fit` containing fitted tree structures, predictions, and metadata.
 #' @export
@@ -38,21 +53,56 @@
 #' )
 #' fit <- figs(y ~ x1 + x2, data = df, max_splits = 4)
 #' print(fit)
-figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", ...) {
+figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5,
+                 mode = "regression", subset = NULL,
+                 na.action = stats::na.omit, ...) {
   cl <- match.call()
-  
+
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame.", call. = FALSE)
   }
-  
-  mf <- stats::model.frame(formula = formula, data = data)
+  if ("weights" %in% names(list(...))) {
+    stop("Case weights are not supported by figsr.", call. = FALSE)
+  }
+
+  if (length(max_splits) != 1 || is.na(max_splits) || max_splits < 0) {
+    stop("`max_splits` must be a single non-negative integer.", call. = FALSE)
+  }
+  if (length(min_n) != 1 || is.na(min_n) || min_n < 1) {
+    stop("`min_n` must be a single integer of at least 1.", call. = FALSE)
+  }
+  if (!is.null(max_trees) &&
+      (length(max_trees) != 1 || is.na(max_trees) || max_trees < 1)) {
+    stop("`max_trees` must be NULL or a single integer of at least 1.", call. = FALSE)
+  }
+  if (!mode %in% c("regression", "classification")) {
+    stop("`mode` must be either \"regression\" or \"classification\".", call. = FALSE)
+  }
+
+  # Subsetting here rather than through `model.frame()`, whose `subset` argument
+  # is evaluated non-standardly and would not see an ordinary vector.
+  if (!is.null(subset)) {
+    data <- data[subset, , drop = FALSE]
+  }
+  mf <- stats::model.frame(formula = formula, data = data, na.action = na.action)
+  mt <- stats::terms(mf)
   y <- stats::model.response(mf)
   X <- mf[, -1, drop = FALSE]
-  
+
+  # A term such as `poly(x, 2)` yields a matrix column, which the split search
+  # would silently turn into NA gains.
+  matrix_terms <- names(X)[vapply(X, function(col) !is.null(dim(col)), logical(1))]
+  if (length(matrix_terms) > 0) {
+    stop(paste0("Matrix-valued terms are not supported: ",
+                paste(matrix_terms, collapse = ", "),
+                ". Compute them as ordinary columns of `data` first."),
+         call. = FALSE)
+  }
+
   if (length(y) == 0 || nrow(X) == 0) {
     stop("Training data cannot be empty.", call. = FALSE)
   }
-  
+
   fit_figs_engine(
     X = X,
     y = y,
@@ -61,12 +111,16 @@ figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5, mo
     min_n = min_n,
     mode = mode,
     formula = formula,
+    terms = mt,
+    xlevels = stats::.getXlevels(mt, mf),
     call = cl
   )
 }
 
 # Engine implementation
-fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", formula = NULL, call = NULL) {
+fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
+                            mode = "regression", formula = NULL, terms = NULL,
+                            xlevels = NULL, call = NULL) {
   n <- nrow(X)
   p <- ncol(X)
   
@@ -167,11 +221,17 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
       parent$right_child <- next_id + 1
       parent$gain <- sp$gain
 
+      # `residuals` are net of the value the parent leaf was already
+      # contributing, while `predict_trees()` reads only the leaf it lands on.
+      # The children must therefore carry the parent's contribution as well.
+      base_value <- parent$value
       left_node <- make_node(
-        id = next_id, value = mean(residuals[sp$idx_left]), sample_indices = sp$idx_left
+        id = next_id, value = base_value + mean(residuals[sp$idx_left]),
+        sample_indices = sp$idx_left
       )
       right_node <- make_node(
-        id = next_id + 1, value = mean(residuals[sp$idx_right]), sample_indices = sp$idx_right
+        id = next_id + 1, value = base_value + mean(residuals[sp$idx_right]),
+        sample_indices = sp$idx_right
       )
 
       tree[[n_idx]] <- parent
@@ -187,10 +247,21 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
     residuals <- y_num - y_fitted
   }
   
-  fitted_vals <- predict_trees(trees, X)
-  
+  # The root of the first tree splits the whole sample, so its leaves already
+  # absorb the outcome mean and no intercept is needed. When no split was ever
+  # accepted there are no leaves to absorb it, and the model must fall back to
+  # the mean rather than predicting zero.
+  intercept <- if (length(trees) == 0) mean(y_num) else 0
+
+  fitted_vals <- intercept + predict_trees(trees, X)
+  if (mode == "classification") {
+    # Keep `fitted_values` on the same scale `predict()` reports.
+    fitted_vals <- pmin(pmax(fitted_vals, PROB_EPS), 1 - PROB_EPS)
+  }
+
   res <- list(
     trees = trees,
+    intercept = intercept,
     mode = mode,
     classes = classes,
     max_splits = max_splits,
@@ -198,6 +269,8 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5, 
     feature_names = colnames(X),
     fitted_values = fitted_vals,
     formula = formula,
+    terms = terms,
+    xlevels = xlevels,
     call = call
   )
   
@@ -240,7 +313,10 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
     is_fac <- is.factor(col_vals) || is.character(col_vals)
     
     if (is_fac) {
-      col_fac <- as.factor(col_vals)
+      # Levels are taken from what is present in this node, not from the
+      # declared level set: a factor with many unused levels would otherwise be
+      # skipped as if it were high-cardinality.
+      col_fac <- droplevels(as.factor(col_vals))
       levs <- levels(col_fac)
       if (length(levs) <= 1) next
       
@@ -271,12 +347,19 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
       }
     } else {
       # Continuous numeric feature
+      # `as.numeric()` guards against integer overflow in the midpoints below,
+      # which silently produces NA cutpoints for large integer predictors.
+      col_vals <- as.numeric(col_vals)
       vals <- sort(unique(col_vals))
       if (length(vals) <= 1) next
-      
+
       cutpoints <- (vals[-length(vals)] + vals[-1]) / 2
       if (length(cutpoints) > 30) {
-        cutpoints <- stats::quantile(vals, probs = seq(0.05, 0.95, length.out = 30))
+        # Quantiles of the sample, not of `vals`: the unique values weight every
+        # distinct level equally and so ignore where the data actually lie.
+        cutpoints <- unique(stats::quantile(
+          col_vals, probs = seq(0.05, 0.95, length.out = 30), names = FALSE
+        ))
       }
       
       for (cut in cutpoints) {
@@ -307,34 +390,46 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
   return(best_split)
 }
 
-# Helper to predict sum of trees on new dataset X_new
+# Helper to predict sum of trees on new dataset X_new.
+# Observations are routed as index sets, one node at a time, rather than one
+# observation at a time: the engine re-predicts the whole sample after every
+# accepted split, so this is the hot path of a fit.
 predict_trees <- function(trees, X_new) {
-  if (length(trees) == 0) return(numeric(nrow(X_new)))
-  
-  total_pred <- numeric(nrow(X_new))
+  n <- nrow(X_new)
+  total_pred <- numeric(n)
+  if (length(trees) == 0) return(total_pred)
+
   for (tree in trees) {
-    for (i in seq_len(nrow(X_new))) {
-      node <- tree[[1]]
-      while (!node$is_leaf) {
-        var_name <- node$feature
-        val <- node$split_val
-        x_val <- X_new[i, var_name]
-        
-        if (node$is_factor) {
-          is_left <- as.character(x_val) %in% as.character(val)
-        } else {
-          is_left <- (x_val <= val)
-        }
-        
-        if (is_left) {
-          node <- tree[[node$left_child]]
-        } else {
-          node <- tree[[node$right_child]]
-        }
+    descend <- function(node, idx) {
+      if (length(idx) == 0) return(invisible(NULL))
+      if (node$is_leaf) {
+        total_pred[idx] <<- total_pred[idx] + node$value
+        return(invisible(NULL))
       }
-      total_pred[i] <- total_pred[i] + node$value
+
+      x_val <- X_new[[node$feature]][idx]
+      if (node$is_factor) {
+        is_left <- as.character(x_val) %in% as.character(node$split_val)
+        is_left[is.na(x_val)] <- NA
+      } else {
+        is_left <- (x_val <= node$split_val)
+      }
+
+      if (anyNA(is_left)) {
+        stop(
+          paste0("`new_data` has missing values in the predictor `",
+                 node$feature, "`; figsr has no surrogate splits and cannot ",
+                 "route those rows."),
+          call. = FALSE
+        )
+      }
+
+      descend(tree[[node$left_child]], idx[is_left])
+      descend(tree[[node$right_child]], idx[!is_left])
     }
+    descend(tree[[1]], seq_len(n))
   }
+
   return(total_pred)
 }
 

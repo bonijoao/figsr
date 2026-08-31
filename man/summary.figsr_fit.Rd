@@ -2,21 +2,21 @@
 % Please edit documentation in R/summary.R
 \name{summary.figsr_fit}
 \alias{summary.figsr_fit}
-\title{Summary Method for `figsr_fit` Models}
+\title{Summary Method for \code{figsr_fit} Models}
 \usage{
 \method{summary}{figsr_fit}(object, ...)
 }
 \arguments{
-\item{object}{A `figsr_fit` object.}
+\item{object}{A \code{figsr_fit} object.}
 
 \item{...}{Additional arguments, currently ignored.}
 }
 \value{
-`object`, invisibly. Called for the side effect of printing the
-  IF-THEN decision rules of each tree to the console.
+\code{object}, invisibly. Called for the side effect of printing the
+IF-THEN decision rules of each tree to the console.
 }
 \description{
-`summary.figsr_fit()` prints human-readable decision rules for each tree in the sum.
+\code{summary.figsr_fit()} prints human-readable decision rules for each tree in the sum.
 }
 \examples{
 set.seed(42)

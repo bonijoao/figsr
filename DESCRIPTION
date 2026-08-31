@@ -1,6 +1,6 @@
 Package: figsr
 Title: Fast Interpretable Greedy-Tree Sums for Tree Ensembles
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("João Paulo", "Assis Bonifácio", email = "jpab.27@hotmail.com",
            role = c("aut", "cre", "cph"), comment = c(ORCID = "0009-0009-2335-8391")),
@@ -12,8 +12,8 @@ Authors@R: c(
            role = c("aut", "cph"), comment = c(ORCID = "0009-0006-2780-318X"))
   )
 Description: Flexible, interpretable machine learning algorithm for additive
-    tree sums ('FIGS'). Fits a sum of shallow 'Classification and Regression
-    Trees' ('CART') by greedily minimizing residual impurity, growing a new
+    tree sums (FIGS). Fits a sum of shallow classification and regression
+    trees (CART) by greedily minimizing residual impurity, growing a new
     tree or deepening an existing one at each step, whichever reduces the
     residuals most. Supports regression and two-class classification, variable
     importance, bootstrap ensembling and seamless integration with 'parsnip'
@@ -38,4 +38,5 @@ VignetteBuilder: knitr, rmarkdown
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

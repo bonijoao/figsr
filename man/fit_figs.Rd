@@ -31,19 +31,19 @@ fit_figs(
 
 \item{min_n}{Integer. Minimum number of observations in a node to split.}
 
-\item{mode}{Character. Either `"regression"` or `"classification"`;
+\item{mode}{Character. Either \code{"regression"} or \code{"classification"};
 classification supports two-class outcomes only.}
 
-\item{...}{Additional arguments passed to [figs()].}
+\item{...}{Additional arguments passed to \code{\link[=figs]{figs()}}.}
 }
 \value{
-An object of class `figsr_fit`.
+An object of class \code{figsr_fit}.
 }
 \description{
-`fit_figs()` is the function `parsnip` calls when fitting a [figs_tree()]
-specification with the `"figsr"` engine. It accepts either the formula
-interface or the `x`/`y` interface and forwards to [figs()]. Users normally
-call [figs()] or `fit()` instead.
+\code{fit_figs()} is the function \code{parsnip} calls when fitting a \code{\link[=figs_tree]{figs_tree()}}
+specification with the \code{"figsr"} engine. It accepts either the formula
+interface or the \code{x}/\code{y} interface and forwards to \code{\link[=figs]{figs()}}. Users normally
+call \code{\link[=figs]{figs()}} or \code{fit()} instead.
 }
 \examples{
 set.seed(42)

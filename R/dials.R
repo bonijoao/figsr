@@ -5,6 +5,10 @@
 #'
 #' @return A `dials` parameter object.
 #' @export
+#'
+#' @examples
+#' max_splits()
+#' max_splits(range = c(2L, 40L))
 max_splits <- function(range = c(2L, 20L), trans = NULL) {
   dials::new_quant_param(
     type = "integer",
@@ -23,6 +27,10 @@ max_splits <- function(range = c(2L, 20L), trans = NULL) {
 #'
 #' @return A `dials` parameter object.
 #' @export
+#'
+#' @examples
+#' max_trees()
+#' max_trees(range = c(1L, 5L))
 max_trees <- function(range = c(1L, 10L), trans = NULL) {
   dials::new_quant_param(
     type = "integer",

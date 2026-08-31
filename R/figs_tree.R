@@ -8,9 +8,14 @@
 #'   `"regression"` or `"classification"`. Classification supports two-class
 #'   outcomes only; a factor with more than two levels raises an error at fit
 #'   time.
-#' @param max_splits An integer for the maximum total splits across all trees. Default is 10.
-#' @param max_trees An integer for the maximum number of trees. Default is NULL.
-#' @param min_n An integer for the minimum number of data points in a node to split. Default is 5.
+#' @param engine A single character string for the computational engine. Only
+#'   `"figsr"` is available.
+#' @param max_splits An integer for the maximum total splits across all trees.
+#'   `NULL` (the default) leaves the engine default of 10 in place.
+#' @param max_trees An integer for the maximum number of trees. `NULL` (the
+#'   default) leaves the number of trees unconstrained.
+#' @param min_n An integer for the minimum number of data points in a node to
+#'   split. `NULL` (the default) leaves the engine default of 5 in place.
 #'
 #' @return A `parsnip` model specification object.
 #' @export
@@ -21,20 +26,59 @@
 #'   set_engine("figsr") |>
 #'   set_mode("regression")
 #' spec
-figs_tree <- function(mode = "regression", max_splits = NULL, max_trees = NULL, min_n = NULL) {
+figs_tree <- function(mode = "regression", engine = "figsr", max_splits = NULL,
+                      max_trees = NULL, min_n = NULL) {
   args <- list(
     max_splits = rlang::enquo(max_splits),
     max_trees  = rlang::enquo(max_trees),
     min_n      = rlang::enquo(min_n)
   )
-  
+
   parsnip::new_model_spec(
     "figs_tree",
     args = args,
     eng_args = NULL,
     mode = mode,
     method = NULL,
-    engine = NULL
+    engine = engine
+  )
+}
+
+#' Update a FIGS Model Specification
+#'
+#' @description
+#' `update()` changes the arguments of a [figs_tree()] specification in place,
+#' the way `tidymodels` users expect of any model specification.
+#'
+#' @param object A [figs_tree()] specification.
+#' @param max_splits An integer for the maximum total splits across all trees.
+#' @param max_trees An integer for the maximum number of trees.
+#' @param min_n An integer for the minimum number of data points in a node to split.
+#' @param fresh Logical. Should the arguments be replaced rather than merged?
+#' @param ... Not used.
+#'
+#' @return An updated [figs_tree()] specification.
+#' @export
+#' @method update figs_tree
+#'
+#' @examples
+#' spec <- figs_tree(max_splits = 4)
+#' update(spec, max_splits = 8)
+update.figs_tree <- function(object, max_splits = NULL, max_trees = NULL,
+                             min_n = NULL, fresh = FALSE, ...) {
+  args <- list(
+    max_splits = rlang::enquo(max_splits),
+    max_trees  = rlang::enquo(max_trees),
+    min_n      = rlang::enquo(min_n)
+  )
+
+  parsnip::update_spec(
+    object = object,
+    parameters = NULL,
+    args_enquo_list = args,
+    fresh = fresh,
+    cls = "figs_tree",
+    ...
   )
 }
 
@@ -45,7 +89,11 @@ figs_tree <- function(mode = "regression", max_splits = NULL, max_trees = NULL, 
 
 make_figs_tree_parsnip <- function() {
   if (!requireNamespace("parsnip", quietly = TRUE)) return(invisible(NULL))
-  
+
+  # Registering twice in one session is an error, which would break
+  # `devtools::load_all()` on an already-loaded package.
+  if ("figs_tree" %in% parsnip::get_model_env()$models) return(invisible(NULL))
+
   # Register model and modes
   parsnip::set_new_model("figs_tree")
   parsnip::set_model_mode("figs_tree", mode = "regression")
@@ -223,8 +271,11 @@ fit_figs <- function(formula = NULL, data = NULL, x = NULL, y = NULL, max_splits
   
   if (!is.null(x) && !is.null(y)) {
     df <- as.data.frame(x)
-    df$.outcome <- y
-    f <- stats::as.formula(".outcome ~ .")
+    # A predictor genuinely called `.outcome` would otherwise be overwritten by
+    # the response and silently dropped from the model.
+    outcome_name <- make.unique(c(names(df), ".outcome"))[length(names(df)) + 1]
+    df[[outcome_name]] <- y
+    f <- stats::as.formula(paste0("`", outcome_name, "` ~ ."))
     return(figs(formula = f, data = df, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
   }
   

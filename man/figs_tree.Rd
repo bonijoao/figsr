@@ -6,6 +6,7 @@
 \usage{
 figs_tree(
   mode = "regression",
+  engine = "figsr",
   max_splits = NULL,
   max_trees = NULL,
   min_n = NULL
@@ -13,22 +14,28 @@ figs_tree(
 }
 \arguments{
 \item{mode}{A single character string for the prediction outcome mode:
-`"regression"` or `"classification"`. Classification supports two-class
+\code{"regression"} or \code{"classification"}. Classification supports two-class
 outcomes only; a factor with more than two levels raises an error at fit
 time.}
 
-\item{max_splits}{An integer for the maximum total splits across all trees. Default is 10.}
+\item{engine}{A single character string for the computational engine. Only
+\code{"figsr"} is available.}
 
-\item{max_trees}{An integer for the maximum number of trees. Default is NULL.}
+\item{max_splits}{An integer for the maximum total splits across all trees.
+\code{NULL} (the default) leaves the engine default of 10 in place.}
 
-\item{min_n}{An integer for the minimum number of data points in a node to split. Default is 5.}
+\item{max_trees}{An integer for the maximum number of trees. \code{NULL} (the
+default) leaves the number of trees unconstrained.}
+
+\item{min_n}{An integer for the minimum number of data points in a node to
+split. \code{NULL} (the default) leaves the engine default of 5 in place.}
 }
 \value{
-A `parsnip` model specification object.
+A \code{parsnip} model specification object.
 }
 \description{
-`figs_tree()` defines a Fast Interpretable Greedy-Tree Sums model for use with
-the `parsnip` and `tidymodels` ecosystem.
+\code{figs_tree()} defines a Fast Interpretable Greedy-Tree Sums model for use with
+the \code{parsnip} and \code{tidymodels} ecosystem.
 }
 \examples{
 library(parsnip)

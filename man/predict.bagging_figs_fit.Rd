@@ -2,20 +2,30 @@
 % Please edit documentation in R/bagging.R
 \name{predict.bagging_figs_fit}
 \alias{predict.bagging_figs_fit}
-\title{Predict Method for `bagging_figs_fit` Models}
+\title{Predict Method for \code{bagging_figs_fit} Models}
 \usage{
-\method{predict}{bagging_figs_fit}(object, new_data, ...)
+\method{predict}{bagging_figs_fit}(object, new_data, type = NULL, ...)
 }
 \arguments{
-\item{object}{A fitted `bagging_figs_fit` object.}
+\item{object}{A fitted \code{bagging_figs_fit} object.}
 
 \item{new_data}{A data frame of predictor values.}
+
+\item{type}{Character. For classification, either \code{"class"} (the default) or
+\code{"prob"}; ignored for regression, which always returns \code{.pred}.}
 
 \item{...}{Additional arguments.}
 }
 \value{
-A `tibble` containing averaged ensemble predictions.
+A \code{tibble} containing averaged ensemble predictions.
 }
 \description{
-Predict Method for `bagging_figs_fit` Models
+Predict Method for \code{bagging_figs_fit} Models
+}
+\examples{
+set.seed(42)
+df <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+bag_fit <- bagging_figs(y ~ x1 + x2, data = df, n_estimators = 3)
+predict(bag_fit, new_data = df)
 }

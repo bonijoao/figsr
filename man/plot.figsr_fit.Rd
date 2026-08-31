@@ -2,25 +2,27 @@
 % Please edit documentation in R/plot.R
 \name{plot.figsr_fit}
 \alias{plot.figsr_fit}
-\title{Plot Method for `figsr_fit` Models}
+\title{Plot Method for \code{figsr_fit} Models}
 \usage{
-\method{plot}{figsr_fit}(x, tree_idx = NULL, style = "scientific", ...)
+\method{plot}{figsr_fit}(x, tree_idx = NULL, style = c("scientific", "modern", "classic"), ...)
 }
 \arguments{
-\item{x}{A fitted `figsr_fit` model object.}
+\item{x}{A fitted \code{figsr_fit} model object.}
 
-\item{tree_idx}{Optional integer vector specifying indices of trees to plot. Default is `NULL` (plots all trees).}
+\item{tree_idx}{Optional integer vector specifying indices of trees to plot. Default is \code{NULL} (plots all trees).}
 
-\item{style}{Character string specifying the visual style: `"scientific"` (default, scientific/editorial notation), `"modern"` (rounded pastel boxes), or `"classic"` (high-contrast minimalist statistical style).}
+\item{style}{Character string specifying the visual style: \code{"scientific"}
+(default, scientific/editorial notation), \code{"modern"} (rounded pastel boxes),
+or \code{"classic"} (high-contrast minimalist statistical style).}
 
-\item{...}{Additional graphical parameters passed to base graphics.}
+\item{...}{Additional arguments, currently ignored.}
 }
 \value{
-Invisible `NULL`.
+Invisible \code{NULL}.
 }
 \description{
-`plot.figsr_fit()` visualizes individual decision trees comprising the
-Fast Interpretable Greedy-Tree Sums (FIGS) model using 100% Base R graphics
+\code{plot.figsr_fit()} visualizes individual decision trees comprising the
+Fast Interpretable Greedy-Tree Sums (FIGS) model using 100\% Base R graphics
 (zero external package dependencies).
 }
 \examples{
