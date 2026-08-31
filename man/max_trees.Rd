@@ -12,8 +12,12 @@ max_trees(range = c(1L, 10L), trans = NULL)
 \item{trans}{A trans object.}
 }
 \value{
-A `dials` parameter object.
+A \code{dials} parameter object.
 }
 \description{
 Dials Parameter for Maximum Trees
+}
+\examples{
+max_trees()
+max_trees(range = c(1L, 5L))
 }

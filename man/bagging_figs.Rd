@@ -25,16 +25,16 @@ bagging_figs(
 
 \item{min_n}{Integer. Minimum node size. Default is 5.}
 
-\item{mode}{Character. `"regression"` or `"classification"`; classification
+\item{mode}{Character. \code{"regression"} or \code{"classification"}; classification
 supports two-class outcomes only.}
 
-\item{...}{Additional arguments passed to [figs()].}
+\item{...}{Additional arguments passed to \code{\link[=figs]{figs()}}.}
 }
 \value{
-An object of class `bagging_figs_fit`.
+An object of class \code{bagging_figs_fit}.
 }
 \description{
-`bagging_figs()` fits an ensemble of FIGS models using bootstrap resampling
+\code{bagging_figs()} fits an ensemble of FIGS models using bootstrap resampling
 to increase stability and predictive performance on noisy datasets.
 }
 \examples{

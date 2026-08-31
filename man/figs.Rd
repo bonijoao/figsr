@@ -11,6 +11,8 @@ figs(
   max_trees = NULL,
   min_n = 5,
   mode = "regression",
+  subset = NULL,
+  na.action = stats::na.omit,
   ...
 )
 }
@@ -25,17 +27,24 @@ figs(
 
 \item{min_n}{Integer. Minimum number of observations required in a node to split. Default is 5.}
 
-\item{mode}{Character. Either `"regression"` or `"classification"`. Only
+\item{mode}{Character. Either \code{"regression"} or \code{"classification"}. Only
 two-class outcomes are supported in classification mode. Default is
-`"regression"`.}
+\code{"regression"}.}
 
-\item{...}{Additional arguments.}
+\item{subset}{An optional vector selecting the rows of \code{data} to fit on,
+passed to \code{\link[stats:model.frame]{stats::model.frame()}}.}
+
+\item{na.action}{A function describing what to do with missing values, passed
+to \code{\link[stats:model.frame]{stats::model.frame()}}. Defaults to \code{\link[stats:na.fail]{stats::na.omit()}}.}
+
+\item{...}{Additional arguments, currently ignored. Case weights are not
+supported and passing \code{weights} raises an error.}
 }
 \value{
-An object of class `figsr_fit` containing fitted tree structures, predictions, and metadata.
+An object of class \code{figsr_fit} containing fitted tree structures, predictions, and metadata.
 }
 \description{
-`figs()` fits a Fast Interpretable Greedy-Tree Sums model for regression or
+\code{figs()} fits a Fast Interpretable Greedy-Tree Sums model for regression or
 binary classification tasks.
 }
 \details{
@@ -43,12 +52,22 @@ Trees are grown one split at a time. At each step every leaf of every existing
 tree, plus the root of a possible new tree, competes for the split that most
 reduces the residual sum of squares; the single best candidate is taken and
 the residuals are recomputed against the whole sum. Growth stops at
-`max_splits` splits or when no candidate improves the fit.
+\code{max_splits} splits or when no candidate improves the fit.
 
 Classification is limited to two classes. A factor outcome with more than two
 levels raises an error. The binary case is fitted on the 0/1 encoding of the
-outcome using the same sum-of-squares criterion, and the raw score is mapped
-to a probability with the logistic function at prediction time.
+outcome using the same sum-of-squares criterion, so the sum of the leaf values
+already estimates the probability of the second level; it is clamped to the
+unit interval at prediction time rather than passed through a link function.
+
+Predictors are used exactly as supplied: numeric features are split at
+midpoints between sorted unique values, capped at 30 sample quantiles, and
+factor features are split by enumerating subsets of their levels, which is
+skipped above 10 levels. A factor level that was not seen in training raises
+an error at prediction time, as it does for the other model-frame based
+fitting functions in \code{stats}. Rows with a missing value in a predictor are
+dropped at fit time by \code{\link[stats:model.frame]{stats::model.frame()}} and raise an error at
+prediction time.
 }
 \examples{
 set.seed(123)

@@ -12,8 +12,12 @@ max_splits(range = c(2L, 20L), trans = NULL)
 \item{trans}{A trans object.}
 }
 \value{
-A `dials` parameter object.
+A \code{dials} parameter object.
 }
 \description{
 Dials Parameter for Maximum Splits
+}
+\examples{
+max_splits()
+max_splits(range = c(2L, 40L))
 }

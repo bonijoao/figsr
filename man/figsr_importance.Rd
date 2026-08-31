@@ -2,23 +2,23 @@
 % Please edit documentation in R/importance.R
 \name{figsr_importance}
 \alias{figsr_importance}
-\title{Calculate Variable Importance for a `figsr_fit` Model}
+\title{Calculate Variable Importance for a \code{figsr_fit} Model}
 \usage{
 figsr_importance(object, relative = TRUE)
 }
 \arguments{
-\item{object}{A fitted `figsr_fit` model object.}
+\item{object}{A fitted \code{figsr_fit} model object.}
 
-\item{relative}{Logical. If `TRUE` (default), the `importance` column is
+\item{relative}{Logical. If \code{TRUE} (default), the \code{importance} column is
 rescaled to percentages of the total gain; otherwise it repeats the raw gain.}
 }
 \value{
-A `tibble` with one row per predictor and columns `feature`, `gain`
-  (raw sum-of-squares reduction) and `importance`, sorted by decreasing
-  importance.
+A \code{tibble} with one row per predictor and columns \code{feature}, \code{gain}
+(raw sum-of-squares reduction) and \code{importance}, sorted by decreasing
+importance.
 }
 \description{
-`figsr_importance()` computes the total reduction in residual impurity (Sum of Squares gain)
+\code{figsr_importance()} computes the total reduction in residual impurity (Sum of Squares gain)
 attributable to each predictor feature across all trees in the fitted FIGS model.
 }
 \details{

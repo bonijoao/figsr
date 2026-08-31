@@ -2,21 +2,21 @@
 % Please edit documentation in R/summary.R
 \name{print.figsr_fit}
 \alias{print.figsr_fit}
-\title{Print Method for `figsr_fit` Models}
+\title{Print Method for \code{figsr_fit} Models}
 \usage{
 \method{print}{figsr_fit}(x, ...)
 }
 \arguments{
-\item{x}{A `figsr_fit` object.}
+\item{x}{A \code{figsr_fit} object.}
 
 \item{...}{Additional arguments, currently ignored.}
 }
 \value{
-`x`, invisibly. Called for the side effect of printing a summary of
-  the fitted tree sum to the console.
+\code{x}, invisibly. Called for the side effect of printing a summary of
+the fitted tree sum to the console.
 }
 \description{
-Print Method for `figsr_fit` Models
+Print Method for \code{figsr_fit} Models
 }
 \examples{
 set.seed(42)

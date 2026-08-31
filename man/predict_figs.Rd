@@ -2,22 +2,29 @@
 % Please edit documentation in R/predict.R
 \name{predict_figs}
 \alias{predict_figs}
-\title{Internal / Parsnip Predict Bridge Function for `figsr_fit`}
+\title{Internal / Parsnip Predict Bridge Function for \code{figsr_fit}}
 \usage{
 predict_figs(object, new_data, type = "numeric", ...)
 }
 \arguments{
-\item{object}{A fitted `figsr_fit` object.}
+\item{object}{A fitted \code{figsr_fit} object.}
 
 \item{new_data}{A data frame of new predictor observations.}
 
-\item{type}{Character. `"numeric"`, `"class"`, or `"prob"`.}
+\item{type}{Character. \code{"numeric"}, \code{"class"}, or \code{"prob"}.}
 
 \item{...}{Additional arguments.}
 }
 \value{
-A `tibble` of predictions.
+A \code{tibble} of predictions.
 }
 \description{
-Internal / Parsnip Predict Bridge Function for `figsr_fit`
+Internal / Parsnip Predict Bridge Function for \code{figsr_fit}
+}
+\examples{
+set.seed(42)
+df <- data.frame(x1 = rnorm(60))
+df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+fit <- figs(y ~ x1, data = df, max_splits = 3)
+predict_figs(fit, new_data = df, type = "numeric")
 }

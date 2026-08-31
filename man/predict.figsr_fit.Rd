@@ -2,24 +2,24 @@
 % Please edit documentation in R/predict.R
 \name{predict.figsr_fit}
 \alias{predict.figsr_fit}
-\title{Predict Method for `figsr_fit` Models}
+\title{Predict Method for \code{figsr_fit} Models}
 \usage{
 \method{predict}{figsr_fit}(object, new_data, type = NULL, ...)
 }
 \arguments{
-\item{object}{A fitted `figsr_fit` object.}
+\item{object}{A fitted \code{figsr_fit} object.}
 
 \item{new_data}{A data frame of new predictor observations.}
 
-\item{type}{Character. Either `"numeric"`, `"class"`, or `"prob"`. Default depends on model mode.}
+\item{type}{Character. Either \code{"numeric"}, \code{"class"}, or \code{"prob"}. Default depends on model mode.}
 
 \item{...}{Additional arguments.}
 }
 \value{
-A `tibble` with predictions in standardized `tidymodels` format.
+A \code{tibble} with predictions in standardized \code{tidymodels} format.
 }
 \description{
-Predict Method for `figsr_fit` Models
+Predict Method for \code{figsr_fit} Models
 }
 \examples{
 set.seed(42)

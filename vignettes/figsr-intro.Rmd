@@ -10,29 +10,128 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4
 )
 ```
 
 ## Introduction to FIGS
 
-**figsr** implements Fast Interpretable Greedy-Tree Sums ('FIGS') (*Tan et al., PNAS 2023*). FIGS fits a sum of shallow decision trees ($\hat{f}(x) = \sum_k \hat{f}_k(x)$) by greedily minimizing residual impurity.
+**figsr** implements Fast Interpretable Greedy-Tree Sums (FIGS) (*Tan et al., PNAS
+2023*). FIGS fits a *sum* of shallow decision trees,
+$\hat{f}(x) = \sum_k \hat{f}_k(x)$, one split at a time.
 
----
+At every step the algorithm compares a single global pool of candidates: opening
+a new tree on the full sample, and splitting each leaf of every tree already
+grown. The candidate with the largest reduction in the residual sum of squares
+wins, and all residuals are recomputed against the whole sum before the next
+step. That is the whole idea: *grow a new tree or deepen an existing one,
+whichever helps most*.
 
-## Basic Usage
+The pay-off is that additive structure is modeled additively. A single CART
+tree has to repeat a subtree for every combination of two independent effects;
+FIGS puts each effect in its own small tree.
+
+## A regression fit
 
 ```{r example}
 library(figsr)
 
 set.seed(42)
-df <- data.frame(
-  x1 = rnorm(100),
-  x2 = rnorm(100),
-  y = 3 * (rnorm(100) > 0) + rnorm(100, sd = 0.2)
-)
+df <- data.frame(x1 = rnorm(300), x2 = rnorm(300), x3 = rnorm(300))
+df$y <- 3 * (df$x1 > 0) + 2 * (df$x2 > 0.5) - 1.5 * (df$x3 < -0.2) +
+  rnorm(300, sd = 0.3)
 
-fit <- figs(y ~ x1 + x2, data = df, max_splits = 4)
-print(fit)
+fit <- figs(y ~ x1 + x2 + x3, data = df, max_splits = 6)
+fit
+```
+
+The three effects were generated independently, so we expect FIGS to recover
+them as separate trees rather than as one deep tree.
+
+```{r rules}
 summary(fit)
 ```
+
+Each leaf holds that tree's *contribution* to the prediction; a prediction is
+the sum of one leaf per tree.
+
+```{r predict}
+preds <- predict(fit, new_data = df)
+head(preds)
+
+cor(preds$.pred, df$y)
+```
+
+## Variable importance
+
+`figsr_importance()` adds up, for each predictor, the residual sum-of-squares
+reduction of every split it carries.
+
+```{r importance}
+figsr_importance(fit)
+```
+
+## Visualizing the tree sum
+
+`plot()` draws every tree in the sum. Three styles are available:
+`"scientific"` (the default), `"modern"` and `"classic"`.
+
+```{r plot, fig.alt = "The trees of the fitted FIGS model, drawn side by side."}
+plot(fit)
+```
+
+## Two-class classification
+
+A factor outcome with two levels switches the model to classification. The
+engine still fits squared error, on the 0/1 encoding of the outcome, so the sum
+of the leaf values estimates the probability of the second level directly.
+
+```{r classification}
+set.seed(7)
+dfc <- data.frame(x1 = rnorm(300), x2 = rnorm(300))
+score <- 1.5 * dfc$x1 + dfc$x2
+dfc$y <- factor(ifelse(score + rnorm(300, sd = 0.5) > 0, "yes", "no"))
+
+fit_c <- figs(y ~ x1 + x2, data = dfc, max_splits = 6)
+
+head(predict(fit_c, new_data = dfc))
+head(predict(fit_c, new_data = dfc, type = "prob"))
+```
+
+## Use inside tidymodels
+
+`figs_tree()` registers FIGS with `parsnip`, so the model can be used anywhere a
+`parsnip` specification is accepted, and `max_splits`, `max_trees` and `min_n`
+can be tuned with `dials` and `tune`.
+
+```{r parsnip}
+library(parsnip)
+
+spec <- figs_tree(max_splits = 6, min_n = 5) |>
+  set_engine("figsr") |>
+  set_mode("regression")
+
+wf_fit <- fit(spec, y ~ x1 + x2 + x3, data = df)
+head(predict(wf_fit, new_data = df))
+```
+
+## Bootstrap ensembling
+
+`bagging_figs()` fits several FIGS models on bootstrap resamples and averages
+them. It trades the readable rule set for stability on noisy data.
+
+```{r bagging}
+bag <- bagging_figs(y ~ x1 + x2 + x3, data = df, n_estimators = 5, max_splits = 6)
+head(predict(bag, new_data = df))
+```
+
+## Limitations
+
+* Classification is limited to two classes.
+* Case weights are not supported.
+* Factor predictors with more than 10 levels present in a node are skipped,
+  because the split search enumerates subsets of levels.
+* Missing values are dropped at fit time and raise an error at prediction time;
+  there are no surrogate splits.
