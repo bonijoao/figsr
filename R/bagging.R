@@ -22,10 +22,21 @@
 #' bag_fit <- bagging_figs(y ~ x1 + x2, data = df, n_estimators = 3)
 bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n = 5, mode = "regression", ...) {
   if (!is.data.frame(data)) stop("`data` must be a data frame.", call. = FALSE)
-  
+  if (length(n_estimators) != 1 || is.na(n_estimators) || n_estimators < 1) {
+    stop("`n_estimators` must be a single integer of at least 1.", call. = FALSE)
+  }
+
+  # A character outcome becomes a factor inside each member fit, so a bootstrap
+  # sample that happens to miss the minority class would be seen as one-class.
+  # Converting once, up front, fixes the level set for every resample.
+  response <- all.vars(formula)[1]
+  if (!is.null(data[[response]]) && is.character(data[[response]])) {
+    data[[response]] <- as.factor(data[[response]])
+  }
+
   n <- nrow(data)
   models <- vector("list", n_estimators)
-  
+
   for (b in seq_len(n_estimators)) {
     boot_indices <- sample.int(n, size = n, replace = TRUE)
     boot_data <- data[boot_indices, , drop = FALSE]
@@ -40,11 +51,14 @@ bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n
     )
   }
   
+  # `figs()` promotes the mode to classification whenever the outcome is a
+  # factor, whatever `mode` says, so the ensemble must record what was actually
+  # fitted rather than what was asked for.
   res <- list(
     models = models,
     n_estimators = n_estimators,
     formula = formula,
-    mode = mode
+    mode = models[[1]]$mode
   )
   
   class(res) <- "bagging_figs_fit"
@@ -62,6 +76,13 @@ bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n
 #' @return A `tibble` containing averaged ensemble predictions.
 #' @export
 #' @method predict bagging_figs_fit
+#'
+#' @examples
+#' set.seed(42)
+#' df <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
+#' df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
+#' bag_fit <- bagging_figs(y ~ x1 + x2, data = df, n_estimators = 3)
+#' predict(bag_fit, new_data = df)
 predict.bagging_figs_fit <- function(object, new_data, type = NULL, ...) {
   n_models <- object$n_estimators
 
