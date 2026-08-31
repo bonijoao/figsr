@@ -1,9 +1,7 @@
 # figsr: Fast Interpretable Greedy-Tree Sums for R
 
 <!-- badges: start -->
-[![CRAN status](https://www.r-pkg.org/badges/version/figsr)](https://CRAN.R-project.org/package=figsr)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/figsr)](https://CRAN.R-project.org/package=figsr)
-[![CRAN downloads per month](https://cranlogs.r-pkg.org/badges/figsr)](https://CRAN.R-project.org/package=figsr)
 [![R-CMD-check](https://github.com/bonijoao/figsr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bonijoao/figsr/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://cran.r-project.org/web/licenses/MIT)
 <!-- badges: end -->
