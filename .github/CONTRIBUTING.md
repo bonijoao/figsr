@@ -228,6 +228,7 @@ These keep the check clean and are easy to break by accident:
   into `inst/WORDLIST` rather than being reworded away.
 - The method paper is **Tan et al., 2023**; `DESCRIPTION`, `README.md` and the
   vignette must keep saying 2023.
-- A new top-level file that is not part of an R package (this one included) must
-  be listed in `.Rbuildignore`, or the check reports a non-standard file at the
-  top level.
+- A new top-level file that is not part of an R package must be listed in
+  `.Rbuildignore`, or the check reports a non-standard file at the top level.
+  Repository-only documents such as this one live in `.github/`, which is
+  already ignored.
