@@ -1,5 +1,20 @@
 # figsr 0.2.0
 
+## Documentation
+
+* A new vignette, `vignette("missing-values")`, works through `na_method =
+  "mia"` on a synthetic case built so that missingness is the whole signal,
+  and on the real Pima Indians Diabetes Database, where missingness is
+  informative but modest.
+
+## New data
+
+* `pima_diabetes`: the Pima Indians Diabetes Database (Smith et al. 1988),
+  768 patients, ships lazily loaded like `iris`. Its five physiologically
+  impossible zeros (`Glucose`, `BloodPressure`, `SkinThickness`, `Insulin`,
+  `BMI`) are already recoded to `NA`, so it is ready to demonstrate
+  `na_method = "mia"` without an internet connection or preprocessing.
+
 ## New features
 
 * `figs()`, `fit_figs()` and `bagging_figs()` gained `na_method`. The default

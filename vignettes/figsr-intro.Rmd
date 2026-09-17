@@ -127,6 +127,10 @@ because it never reads the value of `x`. If you would rather fill the gaps
 before fitting, use a `recipes` imputation step such as
 `recipes::step_impute_knn()` inside a workflow; `figsr` does not impute.
 
+`vignette("missing-values", package = "figsr")` works through a real data
+set where missingness carries a real but modest signal, alongside a second
+synthetic example built so that missingness is the whole story.
+
 ## Use inside tidymodels
 
 `figs_tree()` registers FIGS with `parsnip`, so the model can be used anywhere a

@@ -1,0 +1,181 @@
+---
+title: "Missing Values in figsr: A Worked Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Missing Values in figsr: A Worked Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4
+)
+library(figsr)
+```
+
+The introductory vignette (`vignette("figsr-intro")`) covers `na_method =
+"mia"` in a few lines on a toy data set. This vignette goes deeper, in two
+steps: a synthetic case built so that missingness is the *entire* signal,
+and a real clinical data set where missingness carries a real but modest
+signal, mixed in with everything else a tree can learn.
+
+## When missingness is the whole story
+
+Some measurements are only taken when a clinician already suspects a
+problem. An expensive lab test ordered only for patients who look sick is
+not missing at random: the decision to order it is itself informative,
+often more informative than the number that comes back.
+
+```{r synthetic}
+set.seed(7)
+n <- 2000
+
+age         <- pmin(pmax(rnorm(n, 55, 12), 30), 85)
+cholesterol <- pmin(pmax(rnorm(n, 200, 38), 120), 350)
+
+# The test is ordered more often for older, higher-cholesterol patients, but
+# rarely overall -- an expensive, targeted test.
+suspicion <- plogis(-4 + 0.05 * (age - 55) + 0.02 * (cholesterol - 200))
+ordered   <- rbinom(n, 1, suspicion)
+
+# Ordering the test is itself the dominant signal for the outcome.
+risk_score <- 0.01 * (age - 55) + 0.005 * (cholesterol - 200) + 6 * ordered + rnorm(n)
+bnp <- ifelse(ordered == 1, rnorm(n, mean = 400 + 2 * risk_score, sd = 60), NA)
+
+screening <- data.frame(age, cholesterol, bnp, risk_score)
+
+fit_screening <- figs(risk_score ~ ., data = screening, max_splits = 2, na_method = "mia")
+summary(fit_screening)
+figsr_importance(fit_screening)
+```
+
+The root of the first tree is a pure split on missingness -- `bnp` was
+ordered, or it was not -- and that one rule carries 95% of the total gain.
+`figsr_importance()` lists it on its own row, `missing(bnp)`, because the
+split never reads the value of `bnp` at all.
+
+## A real data set: the Pima Indians Diabetes Database
+
+`pima_diabetes` ships with `figsr`; loading the package makes it available,
+the same way `iris` is available after `library(datasets)`. It is 768
+patient records with eight clinical predictors and a binary outcome
+(diabetes within five years), one of the most-used data sets on Kaggle
+(`kaggle.com/datasets/uciml/pima-indians-diabetes-database`), originally
+distributed through the UCI Machine Learning Repository.
+
+```{r load}
+str(pima_diabetes)
+```
+
+Five columns record measurements that cannot physiologically be zero:
+glucose, blood pressure, skin thickness, insulin and BMI. In the raw data a
+`0` in any of them is a missing value recorded as if it were data -- a
+well-documented quirk of this particular data set, not a `figsr` concern.
+That recoding has already been done in `pima_diabetes`; see `?pima_diabetes`
+for the exact preprocessing.
+
+```{r missingness}
+predictors_with_gaps <- c("Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI")
+missing_rate <- vapply(pima_diabetes[predictors_with_gaps], function(x) mean(is.na(x)), numeric(1))
+knitr::kable(
+  data.frame(predictor = names(missing_rate),
+             missing_pct = sprintf("%.1f%%", 100 * missing_rate)),
+  row.names = FALSE
+)
+```
+
+Insulin is missing in nearly half the records, and skin thickness in almost
+a third. Only 51% of the rows are complete on all five columns at once --
+`na_method = "omit"`, the default, would fit on barely half the data and
+would be unable to predict for most new patients either.
+
+```{r fit}
+set.seed(42)
+train_idx <- sample(nrow(pima_diabetes), floor(0.75 * nrow(pima_diabetes)))
+train <- pima_diabetes[train_idx, ]
+test  <- pima_diabetes[-train_idx, ]
+
+fit_omit <- figs(Outcome ~ ., data = train, max_splits = 10, mode = "classification")
+fit_mia  <- figs(Outcome ~ ., data = train, max_splits = 10, mode = "classification",
+                 na_method = "mia")
+
+cat("training rows used, omit:", length(fit_omit$fitted_values), "of", nrow(train), "\n")
+cat("training rows used, mia :", length(fit_mia$fitted_values),  "of", nrow(train), "\n")
+
+test_complete <- complete.cases(test[, predictors_with_gaps])
+cat("test patients omit can score at all:", sum(test_complete), "of", nrow(test), "\n")
+cat("test patients mia can score        :", nrow(test), "of", nrow(test), "\n")
+```
+
+`na_method = "mia"` fits on every training row and scores every test
+patient, including the ones with an incomplete workup. `na_method = "omit"`
+(the default) trains on about half the data and, at prediction time,
+raises an error for a patient missing a predictor the tree actually split
+on -- it can only be scored on the subset of test patients who happen to
+have every measurement. This is the practical cost of the default: it is
+not that it predicts worse, it is that it often cannot predict at all.
+
+```{r accuracy}
+accuracy <- function(predicted, observed) mean(predicted == observed)
+
+pred_omit <- predict(fit_omit, test[test_complete, ], type = "class")$.pred_class
+pred_mia  <- predict(fit_mia, test, type = "class")$.pred_class
+
+cat("accuracy, omit, on the", sum(test_complete), "patients it can score:",
+    round(accuracy(pred_omit, test$Outcome[test_complete]), 3), "\n")
+cat("accuracy, mia, on those same", sum(test_complete), "patients        :",
+    round(accuracy(pred_mia[test_complete], test$Outcome[test_complete]), 3), "\n")
+cat("accuracy, mia, on all", nrow(test), "test patients                  :",
+    round(accuracy(pred_mia, test$Outcome), 3), "\n")
+```
+
+On the subset both models can score, accuracy is close either way -- with a
+single train/test split of 100-odd patients that difference is well within
+sampling noise, and `mia` is not being sold here as more accurate on data it
+was never asked to handle in the first place. The real result is coverage:
+`mia` scores every patient in the test set, `omit` scores only those with a
+complete workup.
+
+```{r rules}
+summary(fit_mia)
+```
+
+```{r importance}
+figsr_importance(fit_mia)
+```
+
+`Glucose`, `BMI`, `SkinThickness` and `BloodPressure` each pick up an
+`OR ... IS MISSING` clause somewhere in the sum: the tree folds those
+missing values into whichever side of a split fits best, rather than giving
+missingness its own rule the way `bnp` got one in the synthetic example
+above. `Insulin` -- missing in nearly half the records, more than any other
+column here -- carries no importance at all in this fit: `Glucose`, `Age`
+and `BMI` already explain most of the outcome, and the greedy search never
+needs it. This is the ordinary case for real data: missingness is one
+signal among several, not the whole story, and a tree that is free to use
+it will use it exactly as much as it helps, on whichever columns it helps,
+and no more.
+
+## When to impute instead
+
+`figsr` does not impute. If a predictor is missing because of a process you
+want to model away rather than learn from -- a sensor dropout, a scanning
+error -- an imputation step such as `recipes::step_impute_knn()` inside a
+`tidymodels` workflow is a better fit than `na_method = "mia"`. Use `"mia"`
+when the fact that a value is missing might itself be informative, as it
+plausibly is for both examples in this vignette.
+
+## References
+
+Smith, J. W., Everhart, J. E., Dickson, W. C., Knowler, W. C., and Johannes,
+R. S. (1988). Using the ADAP learning algorithm to forecast the onset of
+diabetes mellitus. *Proceedings of the Symposium on Computer Applications
+and Medical Care*, 261-265.
+
+Twala, B. E. T. H., Jones, M. C., and Hand, D. J. (2008). Good methods for
+coping with missing data in decision trees. *Pattern Recognition Letters*,
+29(7), 950-956.
