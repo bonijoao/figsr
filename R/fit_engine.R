@@ -315,9 +315,13 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
 
 # Constructor guaranteeing every node carries the same field set, so consumers
 # never have to test for missing components.
+# `na_dir` is where a missing value of `feature` is routed ("left"/"right"),
+# or NA when the training data had none. `split_on_missing` marks a node that
+# splits on is.na(feature) itself; `split_val` is then unused.
 make_node <- function(id, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
                       split_val = NULL, left_child = NULL, right_child = NULL,
-                      gain = 0, value = 0, sample_indices = integer(0)) {
+                      gain = 0, value = 0, sample_indices = integer(0),
+                      na_dir = NA_character_, split_on_missing = FALSE) {
   list(
     id = id,
     is_leaf = is_leaf,
@@ -328,7 +332,9 @@ make_node <- function(id, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
     right_child = right_child,
     gain = gain,
     value = value,
-    sample_indices = sample_indices
+    sample_indices = sample_indices,
+    na_dir = na_dir,
+    split_on_missing = split_on_missing
   )
 }
 
@@ -439,20 +445,33 @@ predict_trees <- function(trees, X_new) {
       }
 
       x_val <- X_new[[node$feature]][idx]
-      if (node$is_factor) {
-        is_left <- as.character(x_val) %in% as.character(node$split_val)
-        is_left[is.na(x_val)] <- NA
-      } else {
-        is_left <- (x_val <= node$split_val)
-      }
+      miss <- is.na(x_val)
 
-      if (anyNA(is_left)) {
-        stop(
-          paste0("`new_data` has missing values in the predictor `",
-                 node$feature, "`; figsr has no surrogate splits and cannot ",
-                 "route those rows."),
-          call. = FALSE
-        )
+      if (isTRUE(node$split_on_missing)) {
+        is_left <- miss
+      } else {
+        if (node$is_factor) {
+          is_left <- as.character(x_val) %in% as.character(node$split_val)
+        } else {
+          is_left <- (x_val <= node$split_val)
+        }
+        if (any(miss)) {
+          # Fits saved before 0.2.0 carry no `na_dir`; treat them like a
+          # column that had no missing values in training.
+          na_dir <- node$na_dir
+          if (is.null(na_dir) || is.na(na_dir)) {
+            stop(
+              paste0("`new_data` has missing values in the predictor `",
+                     node$feature, "`, which had none when the model was ",
+                     "fitted, so no direction was learned for them. Impute ",
+                     "them first (for example with `recipes::step_impute_*()`) ",
+                     "or refit with `na_method = \"mia\"` on data that ",
+                     "contain missing values."),
+              call. = FALSE
+            )
+          }
+          is_left[miss] <- (na_dir == "left")
+        }
       }
 
       descend(tree[[node$left_child]], idx[is_left])
