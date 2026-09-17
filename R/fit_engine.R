@@ -192,7 +192,7 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
     
     # 1. Candidate split on a NEW tree root
     if (allow_new_tree) {
-      split_new <- find_best_split(X, residuals, seq_len(n), min_n = min_n)
+      split_new <- find_best_split(X, residuals, seq_len(n), min_n = min_n, na_method = na_method)
       if (!is.null(split_new) && split_new$gain > best_global_gain) {
         best_global_gain <- split_new$gain
         best_action <- list(type = "new_tree", split = split_new)
@@ -206,7 +206,7 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
         for (n_idx in seq_along(tree)) {
           node <- tree[[n_idx]]
           if (node$is_leaf) {
-            split_cand <- find_best_split(X, residuals, node$sample_indices, min_n = min_n)
+            split_cand <- find_best_split(X, residuals, node$sample_indices, min_n = min_n, na_method = na_method)
             if (!is.null(split_cand) && split_cand$gain > best_global_gain) {
               best_global_gain <- split_cand$gain
               best_action <- list(
@@ -231,6 +231,7 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
       root_node <- make_node(
         id = 1, is_leaf = FALSE, feature = sp$var_name, is_factor = sp$is_factor,
         split_val = sp$split_val, left_child = 2, right_child = 3, gain = sp$gain,
+        na_dir = sp$na_dir, split_on_missing = sp$split_on_missing,
         value = 0, sample_indices = seq_len(n)
       )
       left_node <- make_node(
@@ -254,6 +255,8 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
       parent$left_child <- next_id
       parent$right_child <- next_id + 1
       parent$gain <- sp$gain
+      parent$na_dir <- sp$na_dir
+      parent$split_on_missing <- sp$split_on_missing
 
       # `residuals` are net of the value the parent leaf was already
       # contributing, while `predict_trees()` reads only the leaf it lands on.
@@ -350,43 +353,67 @@ split_gain <- function(res_sub, ss_total, left_mask, min_n) {
   ss_total - (sum((res_l - mean(res_l))^2) + sum((res_r - mean(res_r))^2))
 }
 
-# Helper to find best split for a leaf subset
-find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
+# Best split of the observations in `sample_indices` on the current residuals.
+# Under na_method = "mia" a column with missing values also offers the three
+# candidates of Twala et al. (2008): NA to the left of each cutpoint (A), NA
+# to the right (B), and NA versus observed on its own (C). A column without
+# missing values costs exactly what it did before.
+find_best_split <- function(X, residuals, sample_indices, min_n = 5,
+                            na_method = "omit") {
   if (length(sample_indices) < (2 * min_n)) return(NULL)
-  
+
   res_sub <- residuals[sample_indices]
   ss_total <- sum((res_sub - mean(res_sub))^2)
-  
+
   best_gain <- -Inf
   best_split <- NULL
-  
+
+  # Keep `left_mask` as the incumbent when its gain beats the best so far.
+  consider <- function(left_mask, var_name, is_factor, split_val,
+                       na_dir = NA_character_, split_on_missing = FALSE) {
+    gain <- split_gain(res_sub, ss_total, left_mask, min_n)
+    if (is.null(gain) || gain <= best_gain) return(invisible(NULL))
+    best_gain <<- gain
+    best_split <<- list(
+      gain = gain, var_name = var_name, is_factor = is_factor,
+      split_val = split_val, na_dir = na_dir, split_on_missing = split_on_missing,
+      idx_left = sample_indices[left_mask], idx_right = sample_indices[!left_mask]
+    )
+    invisible(NULL)
+  }
+
   for (j in seq_len(ncol(X))) {
     col_vals <- X[sample_indices, j]
     var_name <- colnames(X)[j]
     is_fac <- is.factor(col_vals) || is.character(col_vals)
-    
+
+    miss <- is.na(col_vals)
+    obs <- !miss
+    has_na <- na_method == "mia" && any(miss)
+
+    # Split C: is the column missing or not, once per column.
+    if (has_na) {
+      consider(miss, var_name, is_fac, split_val = NA, split_on_missing = TRUE)
+    }
+
     if (is_fac) {
       # Levels are taken from what is present in this node, not from the
       # declared level set: a factor with many unused levels would otherwise be
-      # skipped as if it were high-cardinality.
-      col_fac <- droplevels(as.factor(col_vals))
-      levs <- levels(col_fac)
+      # skipped as if it were high-cardinality. NA is never a level (D-F1).
+      col_chr <- as.character(col_vals)
+      levs <- levels(droplevels(as.factor(col_chr[obs])))
       if (length(levs) <= 1) next
-      
+
       # For factors with <= 10 levels, test non-empty subsets
       if (length(levs) <= 10) {
         subsets <- get_factor_subsets(levs)
         for (sub in subsets) {
-          left_mask <- col_fac %in% sub
-          gain <- split_gain(res_sub, ss_total, left_mask, min_n)
-          if (is.null(gain)) next
-
-          if (gain > best_gain) {
-            best_gain <- gain
-            best_split <- list(
-              gain = gain, var_name = var_name, is_factor = TRUE,
-              split_val = sub, idx_left = sample_indices[left_mask], idx_right = sample_indices[!left_mask]
-            )
+          in_sub <- obs & (col_chr %in% sub)
+          if (has_na) {
+            consider(in_sub | miss, var_name, TRUE, sub, na_dir = "left")
+            consider(in_sub,        var_name, TRUE, sub, na_dir = "right")
+          } else {
+            consider(in_sub, var_name, TRUE, sub)
           }
         }
       }
@@ -394,8 +421,9 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
       # Continuous numeric feature
       # `as.numeric()` guards against integer overflow in the midpoints below,
       # which silently produces NA cutpoints for large integer predictors.
-      col_vals <- as.numeric(col_vals)
-      vals <- sort(unique(col_vals))
+      col_num <- as.numeric(col_vals)
+      x_obs <- col_num[obs]
+      vals <- sort(unique(x_obs))
       if (length(vals) <= 1) next
 
       cutpoints <- (vals[-length(vals)] + vals[-1]) / 2
@@ -403,26 +431,23 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
         # Quantiles of the sample, not of `vals`: the unique values weight every
         # distinct level equally and so ignore where the data actually lie.
         cutpoints <- unique(stats::quantile(
-          col_vals, probs = seq(0.05, 0.95, length.out = 30), names = FALSE
+          x_obs, probs = seq(0.05, 0.95, length.out = 30), names = FALSE
         ))
       }
-      
-      for (cut in cutpoints) {
-        left_mask <- col_vals <= cut
-        gain <- split_gain(res_sub, ss_total, left_mask, min_n)
-        if (is.null(gain)) next
 
-        if (gain > best_gain) {
-          best_gain <- gain
-          best_split <- list(
-            gain = gain, var_name = var_name, is_factor = FALSE,
-            split_val = cut, idx_left = sample_indices[left_mask], idx_right = sample_indices[!left_mask]
-          )
+      for (cut in cutpoints) {
+        # `obs &` turns the NA comparisons into FALSE, so the masks never carry NA.
+        below <- obs & (col_num <= cut)
+        if (has_na) {
+          consider(below | miss, var_name, FALSE, cut, na_dir = "left")
+          consider(below,        var_name, FALSE, cut, na_dir = "right")
+        } else {
+          consider(below, var_name, FALSE, cut)
         }
       }
     }
   }
-  
+
   if (best_gain <= 1e-6 || is.null(best_split)) return(NULL)
   return(best_split)
 }
