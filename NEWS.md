@@ -3,9 +3,9 @@
 ## Documentation
 
 * A new vignette, `vignette("missing-values")`, works through `na_method =
-  "mia"` on a synthetic case built so that missingness is the whole signal,
-  and on the real Pima Indians Diabetes Database, where missingness is
-  informative but modest.
+  "mia"` on the real Pima Indians Diabetes Database, where missingness is
+  informative but modest, and shows `plot()`'s new `main`, `tree_names` and
+  sign-colored leaves on it.
 
 ## New data
 

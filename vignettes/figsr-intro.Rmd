@@ -128,8 +128,8 @@ before fitting, use a `recipes` imputation step such as
 `recipes::step_impute_knn()` inside a workflow; `figsr` does not impute.
 
 `vignette("missing-values", package = "figsr")` works through a real data
-set where missingness carries a real but modest signal, alongside a second
-synthetic example built so that missingness is the whole story.
+set where missingness carries a real but modest signal, and also shows how
+`plot()` colors leaves by the sign of their contribution.
 
 ## Use inside tidymodels
 

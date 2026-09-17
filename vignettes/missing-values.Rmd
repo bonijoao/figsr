@@ -18,47 +18,12 @@ library(figsr)
 ```
 
 The introductory vignette (`vignette("figsr-intro")`) covers `na_method =
-"mia"` in a few lines on a toy data set. This vignette goes deeper, in two
-steps: a synthetic case built so that missingness is the *entire* signal,
-and a real clinical data set where missingness carries a real but modest
-signal, mixed in with everything else a tree can learn.
+"mia"` in a few lines on a small synthetic case, where missingness is built
+to be the entire signal. This vignette goes deeper on a real one: the Pima
+Indians Diabetes Database, where missingness is informative but modest, and
+mixed in with everything else a tree can learn.
 
-## When missingness is the whole story
-
-Some measurements are only taken when a clinician already suspects a
-problem. An expensive lab test ordered only for patients who look sick is
-not missing at random: the decision to order it is itself informative,
-often more informative than the number that comes back.
-
-```{r synthetic}
-set.seed(7)
-n <- 2000
-
-age         <- pmin(pmax(rnorm(n, 55, 12), 30), 85)
-cholesterol <- pmin(pmax(rnorm(n, 200, 38), 120), 350)
-
-# The test is ordered more often for older, higher-cholesterol patients, but
-# rarely overall -- an expensive, targeted test.
-suspicion <- plogis(-4 + 0.05 * (age - 55) + 0.02 * (cholesterol - 200))
-ordered   <- rbinom(n, 1, suspicion)
-
-# Ordering the test is itself the dominant signal for the outcome.
-risk_score <- 0.01 * (age - 55) + 0.005 * (cholesterol - 200) + 6 * ordered + rnorm(n)
-bnp <- ifelse(ordered == 1, rnorm(n, mean = 400 + 2 * risk_score, sd = 60), NA)
-
-screening <- data.frame(age, cholesterol, bnp, risk_score)
-
-fit_screening <- figs(risk_score ~ ., data = screening, max_splits = 2, na_method = "mia")
-summary(fit_screening)
-figsr_importance(fit_screening)
-```
-
-The root of the first tree is a pure split on missingness -- `bnp` was
-ordered, or it was not -- and that one rule carries 95% of the total gain.
-`figsr_importance()` lists it on its own row, `missing(bnp)`, because the
-split never reads the value of `bnp` at all.
-
-## A real data set: the Pima Indians Diabetes Database
+## The Pima Indians Diabetes Database
 
 `pima_diabetes` ships with `figsr`; loading the package makes it available,
 the same way `iris` is available after `library(datasets)`. It is 768
@@ -93,6 +58,8 @@ a third. Only 51% of the rows are complete on all five columns at once --
 `na_method = "omit"`, the default, would fit on barely half the data and
 would be unable to predict for most new patients either.
 
+## Fitting with and without `na_method = "mia"`
+
 ```{r fit}
 set.seed(42)
 train_idx <- sample(nrow(pima_diabetes), floor(0.75 * nrow(pima_diabetes)))
@@ -119,6 +86,8 @@ on -- it can only be scored on the subset of test patients who happen to
 have every measurement. This is the practical cost of the default: it is
 not that it predicts worse, it is that it often cannot predict at all.
 
+## Coverage, not just accuracy
+
 ```{r accuracy}
 accuracy <- function(predicted, observed) mean(predicted == observed)
 
@@ -140,6 +109,8 @@ was never asked to handle in the first place. The real result is coverage:
 `mia` scores every patient in the test set, `omit` scores only those with a
 complete workup.
 
+## Reading the tree sum
+
 ```{r rules}
 summary(fit_mia)
 ```
@@ -150,15 +121,35 @@ figsr_importance(fit_mia)
 
 `Glucose`, `BMI`, `SkinThickness` and `BloodPressure` each pick up an
 `OR ... IS MISSING` clause somewhere in the sum: the tree folds those
-missing values into whichever side of a split fits best, rather than giving
-missingness its own rule the way `bnp` got one in the synthetic example
-above. `Insulin` -- missing in nearly half the records, more than any other
-column here -- carries no importance at all in this fit: `Glucose`, `Age`
-and `BMI` already explain most of the outcome, and the greedy search never
-needs it. This is the ordinary case for real data: missingness is one
-signal among several, not the whole story, and a tree that is free to use
-it will use it exactly as much as it helps, on whichever columns it helps,
-and no more.
+missing values into whichever side of a split fits best, rather than
+splitting on missingness alone the way the introductory vignette's toy
+example does. `Insulin` -- missing in nearly half the records, more than
+any other column here -- carries no importance at all in this fit:
+`Glucose`, `Age` and `BMI` already explain most of the outcome, and the
+greedy search never needs it. This is the ordinary case for real data:
+missingness is one signal among several, not the whole story, and a tree
+that is free to use it will use it exactly as much as it helps, on
+whichever columns it helps, and no more.
+
+## Visualizing the tree sum
+
+`plot()` draws the tree sum with base R graphics. A leaf's color follows
+the sign of its contribution -- green for positive, red for negative -- and
+`main` and `tree_names` label the figure and each tree. A shorter fit reads
+better as a picture than the ten-split model above:
+
+```{r plot, fig.width = 8, fig.height = 4.5, fig.alt = "Three trees of the Pima diabetes tree sum, rooted in Glucose, Age and BMI, with positive leaves in green and negative leaves in red."}
+fit_plot <- figs(Outcome ~ ., data = train, max_splits = 4, mode = "classification",
+                 na_method = "mia")
+root_features <- vapply(fit_plot$trees, function(tr) tr[[1]]$feature, character(1))
+
+plot(fit_plot, main = "Pima diabetes: tree sum under na_method = \"mia\"",
+     tree_names = paste0("splits first on ", root_features))
+```
+
+Green leaves push the prediction toward a diabetes diagnosis, red leaves
+push away from one, and a `", NA"` tag on an edge marks the side a missing
+value of that predictor takes.
 
 ## When to impute instead
 
@@ -167,7 +158,7 @@ want to model away rather than learn from -- a sensor dropout, a scanning
 error -- an imputation step such as `recipes::step_impute_knn()` inside a
 `tidymodels` workflow is a better fit than `na_method = "mia"`. Use `"mia"`
 when the fact that a value is missing might itself be informative, as it
-plausibly is for both examples in this vignette.
+plausibly is here.
 
 ## References
 
