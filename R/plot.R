@@ -97,12 +97,23 @@ plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "
         id = node$id, x = x_val, y = y_val, feature = as.character(node$feature), type = "split"
       )
       
-      if (isTRUE(node$is_factor)) {
-        lbl_left  <- paste(node$split_val, collapse = ",")
-        lbl_right <- "other"
+      if (isTRUE(node$split_on_missing)) {
+        lbl_left  <- "missing"
+        lbl_right <- "observed"
       } else {
-        lbl_left  <- sprintf("<= %.1f", node$split_val)
-        lbl_right <- sprintf("> %.1f", node$split_val)
+        if (isTRUE(node$is_factor)) {
+          lbl_left  <- paste(node$split_val, collapse = ",")
+          lbl_right <- "other"
+        } else {
+          lbl_left  <- sprintf("<= %.1f", node$split_val)
+          lbl_right <- sprintf("> %.1f", node$split_val)
+        }
+        # Edge labels stay ASCII: "NA" marks the side missing values take.
+        na_dir <- node$na_dir
+        if (!is.null(na_dir) && !is.na(na_dir)) {
+          if (na_dir == "left") lbl_left <- paste0(lbl_left, ", NA")
+          else lbl_right <- paste0(lbl_right, ", NA")
+        }
       }
       
       edges[[length(edges) + 1]] <<- list(

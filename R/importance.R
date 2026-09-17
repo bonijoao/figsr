@@ -10,6 +10,11 @@
 #' over every split made on that feature, across all trees in the sum. Features
 #' never selected receive a gain of zero.
 #'
+#' When the model was fitted with `na_method = "mia"`, a split on whether a
+#' predictor is missing is reported on its own row, named `missing(<predictor>)`,
+#' because such a split never consults the predictor's value. A split that
+#' merely sends missing values to one side is credited to the predictor.
+#'
 #' @param object A fitted `figsr_fit` model object.
 #' @param relative Logical. If `TRUE` (default), the `importance` column is
 #'   rescaled to percentages of the total gain; otherwise it repeats the raw gain.
@@ -36,11 +41,15 @@ figsr_importance <- function(object, relative = TRUE) {
   for (tree in object$trees) {
     for (node in tree) {
       if (isTRUE(node$is_leaf) || is.null(node$feature)) next
-      feat_name <- node$feature
-      if (feat_name %in% feats) {
-        importance_scores[feat_name] <-
-          importance_scores[feat_name] + max(node$gain, 0)
+      # A split on missingness never reads the value of the variable, so its
+      # gain is reported on its own row rather than credited to the variable.
+      key <- if (isTRUE(node$split_on_missing)) {
+        paste0("missing(", node$feature, ")")
+      } else {
+        node$feature
       }
+      if (!key %in% names(importance_scores)) importance_scores[key] <- 0
+      importance_scores[key] <- importance_scores[key] + max(node$gain, 0)
     }
   }
 

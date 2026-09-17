@@ -24,6 +24,9 @@ print.figsr_fit <- function(x, ...) {
   used <- split_features(x$trees)
   cat(sprintf("Used in Splits    : %s\n",
               if (length(used) == 0) "none" else paste(used, collapse = ", ")))
+  # Fits saved before 0.2.0 carry no `na_method`; they were fitted with omit.
+  na_method <- if (is.null(x$na_method)) "omit" else x$na_method
+  cat(sprintf("Missing values    : %s\n", na_method))
   cat("========================================================\n\n")
   cat("Use `summary(fit)` to display detailed decision rules.\n")
   cat("Use `plot(fit)` to visualize decision tree structures.\n")
@@ -82,14 +85,25 @@ print_tree_rules <- function(node, tree, indent = "") {
     return()
   }
   
-  if (isTRUE(node$is_factor)) {
-    cond_left  <- sprintf("IF %s IN (%s)", node$feature, paste(node$split_val, collapse = ", "))
-    cond_right <- sprintf("IF %s NOT IN (%s)", node$feature, paste(node$split_val, collapse = ", "))
+  if (isTRUE(node$split_on_missing)) {
+    cond_left  <- sprintf("IF %s IS MISSING", node$feature)
+    cond_right <- sprintf("IF %s IS NOT MISSING", node$feature)
   } else {
-    cond_left  <- sprintf("IF %s <= %.3f", node$feature, node$split_val)
-    cond_right <- sprintf("IF %s >  %.3f", node$feature, node$split_val)
+    if (isTRUE(node$is_factor)) {
+      cond_left  <- sprintf("IF %s IN (%s)", node$feature, paste(node$split_val, collapse = ", "))
+      cond_right <- sprintf("IF %s NOT IN (%s)", node$feature, paste(node$split_val, collapse = ", "))
+    } else {
+      cond_left  <- sprintf("IF %s <= %.3f", node$feature, node$split_val)
+      cond_right <- sprintf("IF %s >  %.3f", node$feature, node$split_val)
+    }
+    na_dir <- node$na_dir
+    if (!is.null(na_dir) && !is.na(na_dir)) {
+      clause <- sprintf(" OR %s IS MISSING", node$feature)
+      if (na_dir == "left") cond_left <- paste0(cond_left, clause)
+      else cond_right <- paste0(cond_right, clause)
+    }
   }
-  
+
   cat(sprintf("%s|-- %s\n", indent, cond_left))
   print_tree_rules(tree[[node$left_child]], tree, indent = paste0(indent, "|   "))
 
