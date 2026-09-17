@@ -39,10 +39,10 @@ passed to \code{\link[stats:model.frame]{stats::model.frame()}}.}
 to \code{\link[stats:model.frame]{stats::model.frame()}}. Defaults to \code{\link[stats:na.fail]{stats::na.omit()}}. Cannot be
 combined with \code{na_method = "mia"}.}
 
-\item{na_method}{Character. Either \code{"omit"} (the default; missing
-predictors are not supported and raise an error) or \code{"mia"} (missing
-predictors are kept in the model frame; a missing outcome is dropped with
-a warning). The split search does not yet use \code{"mia"} values specially.}
+\item{na_method}{Character. How to treat missing predictor values:
+\code{"omit"} (the default) drops incomplete rows, \code{"mia"} learns a direction
+for them at every split and can also split on missingness itself. See
+Details. Cannot be combined with \code{na.action}.}
 
 \item{...}{Additional arguments, currently ignored. Case weights are not
 supported and passing \code{weights} raises an error.}
@@ -72,9 +72,20 @@ midpoints between sorted unique values, capped at 30 sample quantiles, and
 factor features are split by enumerating subsets of their levels, which is
 skipped above 10 levels. A factor level that was not seen in training raises
 an error at prediction time, as it does for the other model-frame based
-fitting functions in \code{stats}. Rows with a missing value in a predictor are
-dropped at fit time by \code{\link[stats:model.frame]{stats::model.frame()}} and raise an error at
-prediction time.
+fitting functions in \code{stats}.
+
+Missing predictor values are governed by \code{na_method}. With \code{"omit"}, the
+default, rows with a missing predictor are dropped at fit time by
+\code{\link[stats:model.frame]{stats::model.frame()}} and raise an error at prediction time. With \code{"mia"}
+(missingness incorporated in attributes, Twala et al. 2008) every row is
+kept: for a predictor with missing values the split search also tries
+sending them to the left or to the right of each cutpoint, and splitting on
+whether the value is missing at all, and keeps whichever reduces the
+residual sum of squares most. The learned direction is used at prediction
+time. A missing value in a predictor that was complete in training raises
+an error, because no direction was learned; impute such values first, for
+example with \code{recipes::step_impute_knn()}. Rows with a missing outcome are
+dropped with a warning under either method.
 }
 \examples{
 set.seed(123)
@@ -85,4 +96,9 @@ df <- data.frame(
 )
 fit <- figs(y ~ x1 + x2, data = df, max_splits = 4)
 print(fit)
+}
+\references{
+Twala, B. E. T. H., Jones, M. C. and Hand, D. J. (2008). Good methods for
+coping with missing data in decision trees. \emph{Pattern Recognition Letters},
+29(7), 950-956.
 }

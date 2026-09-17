@@ -22,9 +22,20 @@
 #' factor features are split by enumerating subsets of their levels, which is
 #' skipped above 10 levels. A factor level that was not seen in training raises
 #' an error at prediction time, as it does for the other model-frame based
-#' fitting functions in `stats`. Rows with a missing value in a predictor are
-#' dropped at fit time by [stats::model.frame()] and raise an error at
-#' prediction time.
+#' fitting functions in `stats`.
+#'
+#' Missing predictor values are governed by `na_method`. With `"omit"`, the
+#' default, rows with a missing predictor are dropped at fit time by
+#' [stats::model.frame()] and raise an error at prediction time. With `"mia"`
+#' (missingness incorporated in attributes, Twala et al. 2008) every row is
+#' kept: for a predictor with missing values the split search also tries
+#' sending them to the left or to the right of each cutpoint, and splitting on
+#' whether the value is missing at all, and keeps whichever reduces the
+#' residual sum of squares most. The learned direction is used at prediction
+#' time. A missing value in a predictor that was complete in training raises
+#' an error, because no direction was learned; impute such values first, for
+#' example with `recipes::step_impute_knn()`. Rows with a missing outcome are
+#' dropped with a warning under either method.
 #'
 #' @param formula A formula specifying outcome and predictor variables.
 #' @param data A data frame containing training data.
@@ -39,12 +50,17 @@
 #' @param na.action A function describing what to do with missing values, passed
 #'   to [stats::model.frame()]. Defaults to [stats::na.omit()]. Cannot be
 #'   combined with `na_method = "mia"`.
-#' @param na_method Character. Either `"omit"` (the default; missing
-#'   predictors are not supported and raise an error) or `"mia"` (missing
-#'   predictors are kept in the model frame; a missing outcome is dropped with
-#'   a warning). The split search does not yet use `"mia"` values specially.
+#' @param na_method Character. How to treat missing predictor values:
+#'   `"omit"` (the default) drops incomplete rows, `"mia"` learns a direction
+#'   for them at every split and can also split on missingness itself. See
+#'   Details. Cannot be combined with `na.action`.
 #' @param ... Additional arguments, currently ignored. Case weights are not
 #'   supported and passing `weights` raises an error.
+#'
+#' @references
+#' Twala, B. E. T. H., Jones, M. C. and Hand, D. J. (2008). Good methods for
+#' coping with missing data in decision trees. *Pattern Recognition Letters*,
+#' 29(7), 950-956.
 #'
 #' @return An object of class `figsr_fit` containing fitted tree structures, predictions, and metadata.
 #' @export

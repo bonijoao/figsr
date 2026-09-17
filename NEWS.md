@@ -1,3 +1,22 @@
+# figsr 0.1.1.9000 (development)
+
+## New features
+
+* `figs()`, `fit_figs()` and `bagging_figs()` gained `na_method`. The default
+  `"omit"` is the previous behavior. `"mia"` (missingness incorporated in
+  attributes, Twala et al. 2008) keeps every row: at each split the search
+  also tries sending missing values left or right of the cutpoint, and
+  splitting on missingness itself, and uses the learned direction at
+  prediction time. `summary()` prints these as `IS MISSING` clauses, `plot()`
+  labels the edge missing values take, and `figsr_importance()` reports a
+  split on missingness on its own `missing(<predictor>)` row.
+
+## Bug fixes
+
+* The `parsnip` engine now fits through the formula interface. The previous
+  data.frame interface ran `model.frame()` with `na.omit` before the engine,
+  so `fit()` silently dropped rows with a missing predictor.
+
 # figsr 0.1.1
 
 ## Bug fixes

@@ -100,6 +100,33 @@ head(predict(fit_c, new_data = dfc))
 head(predict(fit_c, new_data = dfc, type = "prob"))
 ```
 
+## Missing values
+
+By default `figs()` drops any row with a missing predictor, as most
+model-frame based fitting functions in R do. With many predictors that can
+discard a large share of a small data set. Setting `na_method = "mia"` keeps
+every row instead: at each candidate split the search also tries sending the
+missing values to either side, and splitting on whether the value is missing
+at all, and keeps whichever helps most. When missingness carries information,
+the tree can say so in a rule.
+
+```{r missing}
+set.seed(7)
+n <- 200
+dm <- data.frame(x = rnorm(n), z = rnorm(n))
+dm$x[sample.int(n, 60)] <- NA
+dm$y <- 4 * is.na(dm$x) + 2 * (dm$z > 0) + rnorm(n, sd = 0.3)
+
+fit_mia <- figs(y ~ x + z, data = dm, max_splits = 3, na_method = "mia")
+summary(fit_mia)
+figsr_importance(fit_mia)
+```
+
+A split on missingness is listed as `missing(x)` in the importance table,
+because it never reads the value of `x`. If you would rather fill the gaps
+before fitting, use a `recipes` imputation step such as
+`recipes::step_impute_knn()` inside a workflow; `figsr` does not impute.
+
 ## Use inside tidymodels
 
 `figs_tree()` registers FIGS with `parsnip`, so the model can be used anywhere a
@@ -117,6 +144,9 @@ wf_fit <- fit(spec, y ~ x1 + x2 + x3, data = df)
 head(predict(wf_fit, new_data = df))
 ```
 
+`na_method` is an engine argument, so it is set in `set_engine()`:
+`set_engine("figsr", na_method = "mia")`.
+
 ## Bootstrap ensembling
 
 `bagging_figs()` fits several FIGS models on bootstrap resamples and averages
@@ -133,5 +163,6 @@ head(predict(bag, new_data = df))
 * Case weights are not supported.
 * Factor predictors with more than 10 levels present in a node are skipped,
   because the split search enumerates subsets of levels.
-* Missing values are dropped at fit time and raise an error at prediction time;
-  there are no surrogate splits.
+* Missing predictor values are handled by `na_method = "mia"`; there are no
+  surrogate splits, and a predictor that was complete in training cannot be
+  missing at prediction time.

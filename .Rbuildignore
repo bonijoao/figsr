@@ -5,6 +5,7 @@
 ^\.git$
 ^\.gitignore$
 ^\.github$
+^\.superpowers$
 ^CRAN-SUBMISSION$
 ^docs$
 ^LICENSE\.md$

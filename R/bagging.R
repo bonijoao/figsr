@@ -11,8 +11,8 @@
 #' @param min_n Integer. Minimum node size. Default is 5.
 #' @param mode Character. `"regression"` or `"classification"`; classification
 #'   supports two-class outcomes only.
-#' @param na_method Character. Either `"omit"` (the default) or `"mia"`;
-#'   forwarded to [figs()] for every ensemble member.
+#' @param na_method Character. `"omit"` or `"mia"`, passed to every member
+#'   fit; see [figs()].
 #' @param ... Additional arguments passed to [figs()].
 #'
 #' @return An object of class `bagging_figs_fit`.

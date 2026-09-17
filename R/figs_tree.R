@@ -258,8 +258,8 @@ make_figs_tree_parsnip <- function() {
 #' @param min_n Integer. Minimum number of observations in a node to split.
 #' @param mode Character. Either `"regression"` or `"classification"`;
 #'   classification supports two-class outcomes only.
-#' @param na_method Character. Either `"omit"` (the default) or `"mia"`;
-#'   forwarded to [figs()].
+#' @param na_method Character. `"omit"` or `"mia"`; see [figs()]. Set it as an
+#'   engine argument: `set_engine("figsr", na_method = "mia")`.
 #' @param ... Additional arguments passed to [figs()].
 #'
 #' @return An object of class `figsr_fit`.

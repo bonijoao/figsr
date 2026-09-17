@@ -29,8 +29,8 @@ bagging_figs(
 \item{mode}{Character. \code{"regression"} or \code{"classification"}; classification
 supports two-class outcomes only.}
 
-\item{na_method}{Character. Either \code{"omit"} (the default) or \code{"mia"};
-forwarded to \code{\link[=figs]{figs()}} for every ensemble member.}
+\item{na_method}{Character. \code{"omit"} or \code{"mia"}, passed to every member
+fit; see \code{\link[=figs]{figs()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[=figs]{figs()}}.}
 }

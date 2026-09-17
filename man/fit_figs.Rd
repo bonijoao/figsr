@@ -35,8 +35,8 @@ fit_figs(
 \item{mode}{Character. Either \code{"regression"} or \code{"classification"};
 classification supports two-class outcomes only.}
 
-\item{na_method}{Character. Either \code{"omit"} (the default) or \code{"mia"};
-forwarded to \code{\link[=figs]{figs()}}.}
+\item{na_method}{Character. \code{"omit"} or \code{"mia"}; see \code{\link[=figs]{figs()}}. Set it as an
+engine argument: \code{set_engine("figsr", na_method = "mia")}.}
 
 \item{...}{Additional arguments passed to \code{\link[=figs]{figs()}}.}
 }

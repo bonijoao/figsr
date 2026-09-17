@@ -26,6 +26,11 @@ Each split node stores the reduction in residual sum of squares it achieved at
 the moment it was chosen. Importance for a feature is the sum of those gains
 over every split made on that feature, across all trees in the sum. Features
 never selected receive a gain of zero.
+
+When the model was fitted with \code{na_method = "mia"}, a split on whether a
+predictor is missing is reported on its own row, named \verb{missing(<predictor>)},
+because such a split never consults the predictor's value. A split that
+merely sends missing values to one side is credited to the predictor.
 }
 \examples{
 set.seed(42)
