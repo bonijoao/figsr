@@ -297,6 +297,18 @@ make_node <- function(id, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
   )
 }
 
+# SSE reduction achieved by partitioning `res_sub` into `left_mask` and its
+# complement, or NULL when either side holds fewer than `min_n` observations.
+# `left_mask` must be a logical vector with no NA.
+split_gain <- function(res_sub, ss_total, left_mask, min_n) {
+  n_l <- sum(left_mask)
+  n_r <- length(left_mask) - n_l
+  if (n_l < min_n || n_r < min_n) return(NULL)
+  res_l <- res_sub[left_mask]
+  res_r <- res_sub[!left_mask]
+  ss_total - (sum((res_l - mean(res_l))^2) + sum((res_r - mean(res_r))^2))
+}
+
 # Helper to find best split for a leaf subset
 find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
   if (length(sample_indices) < (2 * min_n)) return(NULL)
@@ -325,22 +337,14 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
         subsets <- get_factor_subsets(levs)
         for (sub in subsets) {
           left_mask <- col_fac %in% sub
-          right_mask <- !left_mask
-          n_l <- sum(left_mask)
-          n_r <- sum(right_mask)
-          if (n_l < min_n || n_r < min_n) next
-          
-          res_l <- res_sub[left_mask]
-          res_r <- res_sub[right_mask]
-          ss_l <- sum((res_l - mean(res_l))^2)
-          ss_r <- sum((res_r - mean(res_r))^2)
-          gain <- ss_total - (ss_l + ss_r)
-          
+          gain <- split_gain(res_sub, ss_total, left_mask, min_n)
+          if (is.null(gain)) next
+
           if (gain > best_gain) {
             best_gain <- gain
             best_split <- list(
               gain = gain, var_name = var_name, is_factor = TRUE,
-              split_val = sub, idx_left = sample_indices[left_mask], idx_right = sample_indices[right_mask]
+              split_val = sub, idx_left = sample_indices[left_mask], idx_right = sample_indices[!left_mask]
             )
           }
         }
@@ -364,22 +368,14 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5) {
       
       for (cut in cutpoints) {
         left_mask <- col_vals <= cut
-        right_mask <- !left_mask
-        n_l <- sum(left_mask)
-        n_r <- sum(right_mask)
-        if (n_l < min_n || n_r < min_n) next
-        
-        res_l <- res_sub[left_mask]
-        res_r <- res_sub[right_mask]
-        ss_l <- sum((res_l - mean(res_l))^2)
-        ss_r <- sum((res_r - mean(res_r))^2)
-        gain <- ss_total - (ss_l + ss_r)
-        
+        gain <- split_gain(res_sub, ss_total, left_mask, min_n)
+        if (is.null(gain)) next
+
         if (gain > best_gain) {
           best_gain <- gain
           best_split <- list(
             gain = gain, var_name = var_name, is_factor = FALSE,
-            split_val = cut, idx_left = sample_indices[left_mask], idx_right = sample_indices[right_mask]
+            split_val = cut, idx_left = sample_indices[left_mask], idx_right = sample_indices[!left_mask]
           )
         }
       }
