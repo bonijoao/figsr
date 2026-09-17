@@ -13,6 +13,7 @@ figs(
   mode = "regression",
   subset = NULL,
   na.action = stats::na.omit,
+  na_method = c("omit", "mia"),
   ...
 )
 }
@@ -35,7 +36,13 @@ two-class outcomes are supported in classification mode. Default is
 passed to \code{\link[stats:model.frame]{stats::model.frame()}}.}
 
 \item{na.action}{A function describing what to do with missing values, passed
-to \code{\link[stats:model.frame]{stats::model.frame()}}. Defaults to \code{\link[stats:na.fail]{stats::na.omit()}}.}
+to \code{\link[stats:model.frame]{stats::model.frame()}}. Defaults to \code{\link[stats:na.fail]{stats::na.omit()}}. Cannot be
+combined with \code{na_method = "mia"}.}
+
+\item{na_method}{Character. Either \code{"omit"} (the default; missing
+predictors are not supported and raise an error) or \code{"mia"} (missing
+predictors are kept in the model frame; a missing outcome is dropped with
+a warning). The split search does not yet use \code{"mia"} values specially.}
 
 \item{...}{Additional arguments, currently ignored. Case weights are not
 supported and passing \code{weights} raises an error.}

@@ -75,3 +75,34 @@ test_that("dials parameters cover the tunable arguments", {
   expect_s3_class(max_trees(), "quant_param")
   expect_equal(dials::range_get(max_splits(), original = TRUE)$lower, 2L)
 })
+
+test_that("parsnip hands every row to the engine, including rows with NA", {
+  skip_if_not_installed("parsnip")
+
+  set.seed(31)
+  df <- data.frame(x1 = stats::rnorm(60), x2 = stats::rnorm(60))
+  df$y <- 2 * (df$x1 > 0) + stats::rnorm(60, sd = 0.1)
+  df$x2[1:10] <- NA
+
+  spec <- parsnip::set_mode(
+    parsnip::set_engine(figs_tree(max_splits = 3), "figsr", na.action = stats::na.fail),
+    "regression"
+  )
+  expect_error(parsnip::fit(spec, y ~ x1 + x2, data = df), "missing values")
+  expect_error(parsnip::fit_xy(spec, x = df[, c("x1", "x2")], y = df$y), "missing values")
+})
+
+test_that("fit_xy() still works under the formula interface", {
+  skip_if_not_installed("parsnip")
+
+  set.seed(32)
+  df <- data.frame(x1 = stats::rnorm(80), x2 = stats::rnorm(80))
+  df$y <- factor(ifelse(df$x1 > 0, "yes", "no"))
+
+  spec <- parsnip::set_mode(
+    parsnip::set_engine(figs_tree(max_splits = 3), "figsr"), "classification"
+  )
+  fitted <- parsnip::fit_xy(spec, x = df[, c("x1", "x2")], y = df$y)
+  cls <- stats::predict(fitted, new_data = df, type = "class")
+  expect_setequal(levels(cls$.pred_class), c("no", "yes"))
+})

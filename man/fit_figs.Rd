@@ -13,6 +13,7 @@ fit_figs(
   max_trees = NULL,
   min_n = 5,
   mode = "regression",
+  na_method = c("omit", "mia"),
   ...
 )
 }
@@ -33,6 +34,9 @@ fit_figs(
 
 \item{mode}{Character. Either \code{"regression"} or \code{"classification"};
 classification supports two-class outcomes only.}
+
+\item{na_method}{Character. Either \code{"omit"} (the default) or \code{"mia"};
+forwarded to \code{\link[=figs]{figs()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[=figs]{figs()}}.}
 }

@@ -37,7 +37,12 @@
 #' @param subset An optional vector selecting the rows of `data` to fit on,
 #'   passed to [stats::model.frame()].
 #' @param na.action A function describing what to do with missing values, passed
-#'   to [stats::model.frame()]. Defaults to [stats::na.omit()].
+#'   to [stats::model.frame()]. Defaults to [stats::na.omit()]. Cannot be
+#'   combined with `na_method = "mia"`.
+#' @param na_method Character. Either `"omit"` (the default; missing
+#'   predictors are not supported and raise an error) or `"mia"` (missing
+#'   predictors are kept in the model frame; a missing outcome is dropped with
+#'   a warning). The split search does not yet use `"mia"` values specially.
 #' @param ... Additional arguments, currently ignored. Case weights are not
 #'   supported and passing `weights` raises an error.
 #'
@@ -55,8 +60,9 @@
 #' print(fit)
 figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5,
                  mode = "regression", subset = NULL,
-                 na.action = stats::na.omit, ...) {
+                 na.action = stats::na.omit, na_method = c("omit", "mia"), ...) {
   cl <- match.call()
+  na_method <- match.arg(na_method)
 
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame.", call. = FALSE)
@@ -78,6 +84,16 @@ figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5,
   if (!mode %in% c("regression", "classification")) {
     stop("`mode` must be either \"regression\" or \"classification\".", call. = FALSE)
   }
+  if (na_method == "mia") {
+    # Under MIA the engine owns the missing values; a user-supplied na.action
+    # would either delete them or contradict that, so the two cannot be mixed.
+    if (!missing(na.action)) {
+      stop("`na.action` cannot be combined with `na_method = \"mia\"`; ",
+           "missing predictor values are handled by the split search.",
+           call. = FALSE)
+    }
+    na.action <- stats::na.pass
+  }
 
   # Subsetting here rather than through `model.frame()`, whose `subset` argument
   # is evaluated non-standardly and would not see an ordinary vector.
@@ -86,8 +102,24 @@ figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5,
   }
   mf <- stats::model.frame(formula = formula, data = data, na.action = na.action)
   mt <- stats::terms(mf)
+  xlevels <- stats::.getXlevels(mt, mf)
   y <- stats::model.response(mf)
   X <- mf[, -1, drop = FALSE]
+
+  if (na_method == "mia") {
+    # na.pass keeps rows with a missing outcome too; those carry no signal.
+    keep <- !is.na(y)
+    if (!all(keep)) {
+      warning(sprintf("%d row(s) with a missing outcome were dropped.", sum(!keep)),
+              call. = FALSE)
+      y <- y[keep]
+      X <- X[keep, , drop = FALSE]
+    }
+  } else if (anyNA(X)) {
+    stop("Predictors contain missing values, which `na_method = \"omit\"` ",
+         "cannot use. Set `na_method = \"mia\"` to learn a direction for ",
+         "them, or impute them before fitting.", call. = FALSE)
+  }
 
   # A term such as `poly(x, 2)` yields a matrix column, which the split search
   # would silently turn into NA gains.
@@ -110,16 +142,18 @@ figs <- function(formula, data, max_splits = 10, max_trees = NULL, min_n = 5,
     max_trees = max_trees,
     min_n = min_n,
     mode = mode,
+    na_method = na_method,
     formula = formula,
     terms = mt,
-    xlevels = stats::.getXlevels(mt, mf),
+    xlevels = xlevels,
     call = cl
   )
 }
 
 # Engine implementation
 fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
-                            mode = "regression", formula = NULL, terms = NULL,
+                            mode = "regression", na_method = "omit",
+                            formula = NULL, terms = NULL,
                             xlevels = NULL, call = NULL) {
   n <- nrow(X)
   p <- ncol(X)
@@ -263,6 +297,7 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
     trees = trees,
     intercept = intercept,
     mode = mode,
+    na_method = na_method,
     classes = classes,
     max_splits = max_splits,
     total_splits = total_splits,

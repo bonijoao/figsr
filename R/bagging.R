@@ -11,6 +11,8 @@
 #' @param min_n Integer. Minimum node size. Default is 5.
 #' @param mode Character. `"regression"` or `"classification"`; classification
 #'   supports two-class outcomes only.
+#' @param na_method Character. Either `"omit"` (the default) or `"mia"`;
+#'   forwarded to [figs()] for every ensemble member.
 #' @param ... Additional arguments passed to [figs()].
 #'
 #' @return An object of class `bagging_figs_fit`.
@@ -20,7 +22,8 @@
 #' set.seed(42)
 #' df <- data.frame(x1 = rnorm(50), x2 = rnorm(50), y = rnorm(50))
 #' bag_fit <- bagging_figs(y ~ x1 + x2, data = df, n_estimators = 3)
-bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n = 5, mode = "regression", ...) {
+bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n = 5, mode = "regression", na_method = c("omit", "mia"), ...) {
+  na_method <- match.arg(na_method)
   if (!is.data.frame(data)) stop("`data` must be a data frame.", call. = FALSE)
   if (length(n_estimators) != 1 || is.na(n_estimators) || n_estimators < 1) {
     stop("`n_estimators` must be a single integer of at least 1.", call. = FALSE)
@@ -47,6 +50,7 @@ bagging_figs <- function(formula, data, n_estimators = 10, max_splits = 6, min_n
       max_splits = max_splits,
       min_n = min_n,
       mode = mode,
+      na_method = na_method,
       ...
     )
   }

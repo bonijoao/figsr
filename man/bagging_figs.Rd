@@ -11,6 +11,7 @@ bagging_figs(
   max_splits = 6,
   min_n = 5,
   mode = "regression",
+  na_method = c("omit", "mia"),
   ...
 )
 }
@@ -27,6 +28,9 @@ bagging_figs(
 
 \item{mode}{Character. \code{"regression"} or \code{"classification"}; classification
 supports two-class outcomes only.}
+
+\item{na_method}{Character. Either \code{"omit"} (the default) or \code{"mia"};
+forwarded to \code{\link[=figs]{figs()}} for every ensemble member.}
 
 \item{...}{Additional arguments passed to \code{\link[=figs]{figs()}}.}
 }

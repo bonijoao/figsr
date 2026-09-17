@@ -156,27 +156,31 @@ make_figs_tree_parsnip <- function() {
     has_submodel = FALSE
   )
   
+  # The formula interface hands `formula` and `data` straight to fit_figs():
+  # parsnip's data.frame interface would first run model.frame() with na.omit
+  # and silently drop every row with a missing predictor before the engine,
+  # defeating na_method = "mia".
   # Fit interface for regression
   parsnip::set_fit(
     model = "figs_tree",
     eng = "figsr",
     mode = "regression",
     value = list(
-      interface = "data.frame",
-      protect = c("x", "y"),
+      interface = "formula",
+      protect = c("formula", "data"),
       func = c(pkg = "figsr", fun = "fit_figs"),
       defaults = list(mode = "regression")
     )
   )
-  
+
   # Fit interface for classification
   parsnip::set_fit(
     model = "figs_tree",
     eng = "figsr",
     mode = "classification",
     value = list(
-      interface = "data.frame",
-      protect = c("x", "y"),
+      interface = "formula",
+      protect = c("formula", "data"),
       func = c(pkg = "figsr", fun = "fit_figs"),
       defaults = list(mode = "classification")
     )
@@ -254,6 +258,8 @@ make_figs_tree_parsnip <- function() {
 #' @param min_n Integer. Minimum number of observations in a node to split.
 #' @param mode Character. Either `"regression"` or `"classification"`;
 #'   classification supports two-class outcomes only.
+#' @param na_method Character. Either `"omit"` (the default) or `"mia"`;
+#'   forwarded to [figs()].
 #' @param ... Additional arguments passed to [figs()].
 #'
 #' @return An object of class `figsr_fit`.
@@ -264,11 +270,12 @@ make_figs_tree_parsnip <- function() {
 #' df <- data.frame(x1 = rnorm(60), x2 = rnorm(60))
 #' df$y <- 2 * (df$x1 > 0) + rnorm(60, sd = 0.2)
 #' fit_figs(x = df[, c("x1", "x2")], y = df$y, max_splits = 3)
-fit_figs <- function(formula = NULL, data = NULL, x = NULL, y = NULL, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", ...) {
+fit_figs <- function(formula = NULL, data = NULL, x = NULL, y = NULL, max_splits = 10, max_trees = NULL, min_n = 5, mode = "regression", na_method = c("omit", "mia"), ...) {
+  na_method <- match.arg(na_method)
   if (!is.null(formula) && !is.null(data)) {
-    return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
+    return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, na_method = na_method, ...))
   }
-  
+
   if (!is.null(x) && !is.null(y)) {
     df <- as.data.frame(x)
     # A predictor genuinely called `.outcome` would otherwise be overwritten by
@@ -276,13 +283,13 @@ fit_figs <- function(formula = NULL, data = NULL, x = NULL, y = NULL, max_splits
     outcome_name <- make.unique(c(names(df), ".outcome"))[length(names(df)) + 1]
     df[[outcome_name]] <- y
     f <- stats::as.formula(paste0("`", outcome_name, "` ~ ."))
-    return(figs(formula = f, data = df, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
+    return(figs(formula = f, data = df, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, na_method = na_method, ...))
   }
-  
+
   # Fallback if positional args provided
   if (inherits(formula, "formula") && is.data.frame(data)) {
-    return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, ...))
+    return(figs(formula = formula, data = data, max_splits = max_splits, max_trees = max_trees, min_n = min_n, mode = mode, na_method = na_method, ...))
   }
-  
+
   stop("Invalid input to fit_figs: expected formula and data, or x and y.", call. = FALSE)
 }
