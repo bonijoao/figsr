@@ -77,6 +77,63 @@ test_that("plot() restores the graphical parameters it changed", {
   expect_equal(graphics::par("mfrow"), before)
 })
 
+test_that("plot() restores the outer margin reserved for main", {
+  set.seed(39)
+  df <- data.frame(x = rnorm(60))
+  df$y <- 2 * (df$x > 0) + rnorm(60, sd = 0.2)
+  fit <- figs(y ~ x, data = df, max_splits = 2)
+
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  graphics::par(mfrow = c(2, 2), oma = c(1, 1, 1, 1))
+  before_mfrow <- graphics::par("mfrow")
+  before_oma   <- graphics::par("oma")
+  plot(fit, main = "Title")
+  expect_equal(graphics::par("mfrow"), before_mfrow)
+  expect_equal(graphics::par("oma"), before_oma)
+})
+
+test_that("plot() accepts main and tree_names, and validates their length", {
+  set.seed(37)
+  df <- data.frame(x1 = rnorm(80), x2 = rnorm(80))
+  df$y <- 2 * (df$x1 > 0) - 1.5 * (df$x2 > 0) + rnorm(80, sd = 0.2)
+  fit <- figs(y ~ x1 + x2, data = df, max_splits = 5)
+  n_tree <- length(fit$trees)
+
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+
+  expect_silent(plot(fit, main = "FIGS tree sum"))
+  expect_silent(plot(fit, tree_names = "same name for every tree"))
+  expect_silent(plot(fit, tree_names = c("first tree", rep(NA_character_, n_tree - 1))))
+  expect_silent(plot(fit, tree_idx = 1,
+                     tree_names = c("first tree", rep(NA_character_, n_tree - 1))))
+
+  expect_error(plot(fit, main = c("a", "b")), "`main` must be a single string")
+  expect_error(plot(fit, main = NA_character_), "`main` must be a single string")
+  expect_error(plot(fit, tree_names = rep("x", n_tree + 1)), paste0("length ", n_tree))
+})
+
+test_that("plot() renders leaves of both signs without error, in every style", {
+  set.seed(38)
+  df <- data.frame(x = rnorm(80))
+  df$y <- 3 * (df$x > 0) - 3 * (df$x <= 0) + rnorm(80, sd = 0.1)
+  fit <- figs(y ~ x, data = df, max_splits = 1)
+
+  leaf_vals <- vapply(fit$trees[[1]], function(nd) {
+    if (isTRUE(nd$is_leaf)) nd$value else NA_real_
+  }, numeric(1))
+  leaf_vals <- leaf_vals[!is.na(leaf_vals)]
+  expect_true(any(leaf_vals > 0))
+  expect_true(any(leaf_vals < 0))
+
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  for (style in c("scientific", "modern", "classic")) {
+    expect_silent(plot(fit, style = style))
+  }
+})
+
 test_that("figsr_importance() handles absolute scaling and unused predictors", {
   set.seed(36)
   df <- data.frame(x1 = rnorm(80), x2 = rnorm(80))

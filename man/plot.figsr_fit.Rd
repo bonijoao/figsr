@@ -4,7 +4,14 @@
 \alias{plot.figsr_fit}
 \title{Plot Method for \code{figsr_fit} Models}
 \usage{
-\method{plot}{figsr_fit}(x, tree_idx = NULL, style = c("scientific", "modern", "classic"), ...)
+\method{plot}{figsr_fit}(
+  x,
+  tree_idx = NULL,
+  style = c("scientific", "modern", "classic"),
+  main = NULL,
+  tree_names = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A fitted \code{figsr_fit} model object.}
@@ -14,6 +21,18 @@
 \item{style}{Character string specifying the visual style: \code{"scientific"}
 (default, scientific/editorial notation), \code{"modern"} (rounded pastel boxes),
 or \code{"classic"} (high-contrast minimalist statistical style).}
+
+\item{main}{Optional character string. An overall title drawn once above
+every tree panel. Default is \code{NULL} (no overall title, the previous
+behavior).}
+
+\item{tree_names}{Optional character vector overriding the per-tree panel
+titles (\code{"Subtree f_1(x)"}, \code{"Tree 1"}, ...). Either a single string,
+applied to every plotted tree, or a vector with one entry per tree in
+\code{x$trees} -- indexed by each tree's position in the fit, not by plotting
+order, so it stays correct when \code{tree_idx} only plots some of them. \code{NA}
+in a given position falls back to the default title for that tree only.
+Default is \code{NULL} (the previous, automatic titles).}
 
 \item{...}{Additional arguments, currently ignored.}
 }
@@ -32,4 +51,5 @@ fit <- figs(y ~ x1 + x2, data = df, max_splits = 3)
 plot(fit)
 plot(fit, style = "scientific")
 plot(fit, tree_idx = 1)
+plot(fit, main = "FIGS tree sum", tree_names = "one tree of the sum")
 }

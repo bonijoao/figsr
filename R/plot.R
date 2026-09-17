@@ -10,6 +10,16 @@
 #' @param style Character string specifying the visual style: `"scientific"`
 #'   (default, scientific/editorial notation), `"modern"` (rounded pastel boxes),
 #'   or `"classic"` (high-contrast minimalist statistical style).
+#' @param main Optional character string. An overall title drawn once above
+#'   every tree panel. Default is `NULL` (no overall title, the previous
+#'   behavior).
+#' @param tree_names Optional character vector overriding the per-tree panel
+#'   titles (`"Subtree f_1(x)"`, `"Tree 1"`, ...). Either a single string,
+#'   applied to every plotted tree, or a vector with one entry per tree in
+#'   `x$trees` -- indexed by each tree's position in the fit, not by plotting
+#'   order, so it stays correct when `tree_idx` only plots some of them. `NA`
+#'   in a given position falls back to the default title for that tree only.
+#'   Default is `NULL` (the previous, automatic titles).
 #' @param ... Additional arguments, currently ignored.
 #'
 #' @return Invisible `NULL`.
@@ -23,7 +33,9 @@
 #' plot(fit)
 #' plot(fit, style = "scientific")
 #' plot(fit, tree_idx = 1)
-plot.figsr_fit <- function(x, tree_idx = NULL, style = c("scientific", "modern", "classic"), ...) {
+#' plot(fit, main = "FIGS tree sum", tree_names = "one tree of the sum")
+plot.figsr_fit <- function(x, tree_idx = NULL, style = c("scientific", "modern", "classic"),
+                           main = NULL, tree_names = NULL, ...) {
   style <- match.arg(style)
 
   if (length(x$trees) == 0) {
@@ -38,50 +50,80 @@ plot.figsr_fit <- function(x, tree_idx = NULL, style = c("scientific", "modern",
   target_trees <- target_trees[!is.na(target_trees) &
                                  target_trees >= 1 &
                                  target_trees <= length(x$trees)]
-  
+
   if (length(target_trees) == 0) {
     stop("Invalid `tree_idx` specified.", call. = FALSE)
   }
-  
+
+  if (!is.null(main) && (length(main) != 1L || is.na(main))) {
+    stop("`main` must be a single string.", call. = FALSE)
+  }
+
+  # Resolved once per tree in the fit, indexed by that tree's own position,
+  # so it stays correct however `tree_idx` subsets what actually gets drawn.
+  tree_titles <- rep(NA_character_, length(x$trees))
+  if (!is.null(tree_names)) {
+    if (length(tree_names) == 1L) {
+      tree_titles[] <- tree_names
+    } else if (length(tree_names) == length(x$trees)) {
+      tree_titles <- as.character(tree_names)
+    } else {
+      stop(paste0("`tree_names` must be NULL, a single string, or a character ",
+                  "vector of length ", length(x$trees),
+                  " (one per tree in the fit)."), call. = FALSE)
+    }
+  }
+
   n_trees <- length(target_trees)
-  
+
   # Save user's original par settings and restore on exit
   old_par <- graphics::par(no.readonly = TRUE)
   on.exit(graphics::par(old_par))
-  
+
   n_cols <- min(n_trees, 3)
   n_rows <- ceiling(n_trees / n_cols)
-  
-  graphics::par(mfrow = c(n_rows, n_cols), mar = c(1.5, 1.5, 3, 1.5))
-  
+
+  # An overall title needs room reserved in the outer margin; without one,
+  # the layout is exactly what it was before this argument existed.
+  outer_margin <- if (is.null(main)) c(0, 0, 0, 0) else c(0, 0, 3, 0)
+  graphics::par(mfrow = c(n_rows, n_cols), mar = c(1.5, 1.5, 3, 1.5), oma = outer_margin)
+
   for (t_idx in target_trees) {
     tree <- x$trees[[t_idx]]
-    plot_single_tree_base(tree, t_idx, style = style, mode = x$mode)
+    plot_single_tree_base(tree, t_idx, style = style, mode = x$mode,
+                          title_override = tree_titles[t_idx])
   }
-  
+
+  if (!is.null(main)) {
+    graphics::mtext(main, outer = TRUE, side = 3, line = 0.5, cex = 1.3, font = 2)
+  }
+
   return(invisible(NULL))
 }
 
-# Base R tree renderer supporting multiple visual styles
-plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "regression") {
+# Base R tree renderer supporting multiple visual styles. `title_override`,
+# when not NA, replaces the default per-style panel title text; the style's
+# own title color and font still apply.
+plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "regression",
+                                  title_override = NA_character_) {
   node_map <- list()
   for (n in tree) {
     node_map[[as.character(n$id)]] <- n
   }
-  
+
   leaf_counter <- 0
   coords <- list()
   edges <- list()
-  
+
   assign_coords <- function(node_id, depth) {
     node <- node_map[[as.character(node_id)]]
     if (is.null(node)) return(NULL)
-    
+
     if (isTRUE(node$is_leaf)) {
       leaf_counter <<- leaf_counter + 1
       x_val <- as.numeric(leaf_counter)
       y_val <- as.numeric(-depth)
-      
+
       coords[[length(coords) + 1]] <<- list(
         id = node$id, x = x_val, y = y_val, val = node$value, type = "leaf"
       )
@@ -89,14 +131,14 @@ plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "
     } else {
       left_pos  <- assign_coords(node$left_child, depth + 1)
       right_pos <- assign_coords(node$right_child, depth + 1)
-      
+
       x_val <- as.numeric((left_pos["x"] + right_pos["x"]) / 2)
       y_val <- as.numeric(-depth)
-      
+
       coords[[length(coords) + 1]] <<- list(
         id = node$id, x = x_val, y = y_val, feature = as.character(node$feature), type = "split"
       )
-      
+
       if (isTRUE(node$split_on_missing)) {
         lbl_left  <- "missing"
         lbl_right <- "observed"
@@ -115,87 +157,99 @@ plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "
           else lbl_right <- paste0(lbl_right, ", NA")
         }
       }
-      
+
       edges[[length(edges) + 1]] <<- list(
         x1 = x_val, y1 = y_val, x2 = as.numeric(left_pos["x"]), y2 = as.numeric(left_pos["y"]), label = lbl_left
       )
       edges[[length(edges) + 1]] <<- list(
         x1 = x_val, y1 = y_val, x2 = as.numeric(right_pos["x"]), y2 = as.numeric(right_pos["y"]), label = lbl_right
       )
-      
+
       return(c(x = x_val, y = y_val))
     }
   }
-  
+
   assign_coords(1, 0)
-  
+
   xs <- sapply(coords, function(item) item$x)
   ys <- sapply(coords, function(item) item$y)
-  
+
   x_min <- min(xs) - 0.5
   x_max <- max(xs) + 0.5
   y_min <- min(ys) - 0.6
   y_max <- max(ys) + 0.5
-  
+
   graphics::plot(1, type = "n", xlim = c(x_min, x_max), ylim = c(y_min, y_max),
                  axes = FALSE, xlab = "", ylab = "")
-  
-  # Configure theme palettes based on style
+
+  # Configure theme palettes based on style. Leaves get a positive- and a
+  # negative-value palette in "scientific" and "modern" -- green for a
+  # positive contribution, red for a negative one; "classic" stays
+  # monochromatic by design, so its single leaf palette serves both signs.
   if (style == "scientific") {
-    main_title <- sprintf("Subtree f_%d(x)", tree_num)
+    default_title <- sprintf("Subtree f_%d(x)", tree_num)
     col_title  <- "#0E6655"
     col_line   <- "#5D6D7E"
     lwd_line   <- 2
     bg_tag     <- "#FEF9E7"; border_tag <- "#F5B041"; text_tag <- "#7D6608"
     bg_split   <- "#EBF5FB"; border_split <- "#2E86C1"; text_split <- "#1B4F72"
-    bg_leaf    <- "#E8F8F5"; border_leaf  <- "#16A085"; text_leaf  <- "#0E6655"
+    bg_leaf_pos <- "#E8F8F5"; border_leaf_pos <- "#16A085"; text_leaf_pos <- "#0E6655"
+    bg_leaf_neg <- "#FDEDEC"; border_leaf_neg <- "#C0392B"; text_leaf_neg <- "#78281F"
   } else if (style == "classic") {
-    main_title <- sprintf("Tree %d", tree_num)
+    default_title <- sprintf("Tree %d", tree_num)
     col_title  <- "#2C3E50"
     col_line   <- "#34495E"
     lwd_line   <- 1.5
     bg_tag     <- "#F4F6F6"; border_tag <- "#A6ACAF"; text_tag <- "#2C3E50"
     bg_split   <- "#FFFFFF"; border_split <- "#2C3E50"; text_split <- "#2C3E50"
-    bg_leaf    <- "#EAEDED"; border_leaf  <- "#7F8C8D"; text_leaf  <- "#17202A"
+    bg_leaf_pos <- "#EAEDED"; border_leaf_pos <- "#7F8C8D"; text_leaf_pos <- "#17202A"
+    bg_leaf_neg <- bg_leaf_pos; border_leaf_neg <- border_leaf_pos; text_leaf_neg <- text_leaf_pos
   } else { # "modern"
-    main_title <- sprintf("Tree %d", tree_num)
+    default_title <- sprintf("Tree %d", tree_num)
     col_title  <- "#1B4F72"
     col_line   <- "#85929E"
     lwd_line   <- 2
     bg_tag     <- "#FFFFFF"; border_tag <- "#BDC3C7"; text_tag <- "#2C3E50"
     bg_split   <- "#EBF5FB"; border_split <- "#2980B9"; text_split <- "#1B4F72"
-    bg_leaf    <- "#E8F8F5"; border_leaf  <- "#27AE60"; text_leaf  <- "#117A65"
+    bg_leaf_pos <- "#E8F8F5"; border_leaf_pos <- "#27AE60"; text_leaf_pos <- "#117A65"
+    bg_leaf_neg <- "#FDEDEC"; border_leaf_neg <- "#E74C3C"; text_leaf_neg <- "#922B21"
   }
-  
+
+  main_title <- if (is.na(title_override)) default_title else title_override
   graphics::title(main = main_title, col.main = col_title, font.main = 2, cex.main = 1.1)
-  
+
   # 1. Connecting branch lines
   for (e in edges) {
     graphics::lines(c(e$x1, e$x2), c(e$y1, e$y2), col = col_line, lwd = lwd_line)
   }
-  
+
   # 2. Branch condition tags
   for (e in edges) {
     mx <- (e$x1 + e$x2) / 2
     my <- (e$y1 + e$y2) / 2
-    
+
     tw <- max(graphics::strwidth(e$label, cex = 0.8) * 0.60 + 0.08, 0.18)
     th <- max(graphics::strheight(e$label, cex = 0.8) * 0.60 + 0.05, 0.09)
-    
+
     graphics::rect(mx - tw, my - th, mx + tw, my + th, col = bg_tag, border = border_tag, lwd = 1)
     graphics::text(mx, my, labels = e$label, cex = 0.8, col = text_tag, font = if(style == "scientific") 2 else 1)
   }
-  
+
   # 3. Node boxes
   for (nd in coords) {
     if (nd$type == "split") {
       lbl <- if (style == "scientific") sprintf("[%s]", nd$feature) else nd$feature
       tw <- max(graphics::strwidth(lbl, cex = 0.9, font = 2) * 0.60 + 0.12, 0.25)
       th <- max(graphics::strheight(lbl, cex = 0.9, font = 2) * 0.60 + 0.08, 0.11)
-      
+
       graphics::rect(nd$x - tw, nd$y - th, nd$x + tw, nd$y + th, col = bg_split, border = border_split, lwd = 2)
       graphics::text(nd$x, nd$y, labels = lbl, cex = 0.9, col = text_split, font = 2)
     } else {
+      is_neg <- nd$val < 0
+      bg_leaf     <- if (is_neg) bg_leaf_neg else bg_leaf_pos
+      border_leaf <- if (is_neg) border_leaf_neg else border_leaf_pos
+      text_leaf   <- if (is_neg) text_leaf_neg else text_leaf_pos
+
       sign_str <- if (nd$val >= 0) "+" else ""
       if (style == "scientific") {
         lbl <- sprintf("dy = %s%.2f", sign_str, nd$val)
@@ -205,10 +259,10 @@ plot_single_tree_base <- function(tree, tree_num, style = "scientific", mode = "
       } else {
         lbl <- sprintf("%s%.2f", sign_str, nd$val)
       }
-      
+
       tw <- max(graphics::strwidth(lbl, cex = 0.85, font = 2) * 0.60 + 0.10, 0.22)
       th <- max(graphics::strheight(lbl, cex = 0.85, font = 2) * 0.60 + 0.08, 0.11)
-      
+
       graphics::rect(nd$x - tw, nd$y - th, nd$x + tw, nd$y + th, col = bg_leaf, border = border_leaf, lwd = if(style == "classic") 1 else 2)
       graphics::text(nd$x, nd$y, labels = lbl, cex = 0.85, col = text_leaf, font = if(style == "classic") 1 else 2)
     }

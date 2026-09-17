@@ -17,6 +17,15 @@
 
 ## New features
 
+* `plot()` gained `main`, an overall title drawn once above every tree
+  panel, and `tree_names`, overriding the automatic per-tree panel titles
+  (a single string applies to every tree; a vector is indexed by each
+  tree's position in the fit, so it stays correct when `tree_idx` only
+  plots some of them; `NA` in a position keeps that tree's default title).
+  In the `"scientific"` and `"modern"` styles, a leaf's background, border
+  and text now depend on the sign of its contribution -- green for
+  positive, red for negative; `"classic"` stays monochromatic by design.
+
 * `figs()`, `fit_figs()` and `bagging_figs()` gained `na_method`. The default
   `"omit"` is the previous behavior. `"mia"` (missingness incorporated in
   attributes, Twala et al. 2008) keeps every row: at each split the search
