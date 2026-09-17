@@ -84,8 +84,12 @@ whether the value is missing at all, and keeps whichever reduces the
 residual sum of squares most. The learned direction is used at prediction
 time. A missing value in a predictor that was complete in training raises
 an error, because no direction was learned; impute such values first, for
-example with \code{recipes::step_impute_knn()}. Rows with a missing outcome are
-dropped with a warning under either method.
+example with \code{recipes::step_impute_knn()}. Even under \code{"mia"}, a branch of
+the tree that no missing value reached during training has not learned a
+direction, so a missing value reaching that same branch at prediction time
+still raises an error. Rows with a missing outcome are dropped with a
+warning under \code{na_method = "mia"} only; under \code{"omit"} they are dropped
+silently by \code{\link[stats:na.fail]{stats::na.omit()}}.
 }
 \examples{
 set.seed(123)

@@ -34,8 +34,12 @@
 #' residual sum of squares most. The learned direction is used at prediction
 #' time. A missing value in a predictor that was complete in training raises
 #' an error, because no direction was learned; impute such values first, for
-#' example with `recipes::step_impute_knn()`. Rows with a missing outcome are
-#' dropped with a warning under either method.
+#' example with `recipes::step_impute_knn()`. Even under `"mia"`, a branch of
+#' the tree that no missing value reached during training has not learned a
+#' direction, so a missing value reaching that same branch at prediction time
+#' still raises an error. Rows with a missing outcome are dropped with a
+#' warning under `na_method = "mia"` only; under `"omit"` they are dropped
+#' silently by [stats::na.omit()].
 #'
 #' @param formula A formula specifying outcome and predictor variables.
 #' @param data A data frame containing training data.
@@ -416,8 +420,8 @@ find_best_split <- function(X, residuals, sample_indices, min_n = 5,
       # Levels are taken from what is present in this node, not from the
       # declared level set: a factor with many unused levels would otherwise be
       # skipped as if it were high-cardinality. NA is never a level (D-F1).
+      levs <- levels(droplevels(as.factor(col_vals)))
       col_chr <- as.character(col_vals)
-      levs <- levels(droplevels(as.factor(col_chr[obs])))
       if (length(levs) <= 1) next
 
       # For factors with <= 10 levels, test non-empty subsets
@@ -503,11 +507,12 @@ predict_trees <- function(trees, X_new) {
           if (is.null(na_dir) || is.na(na_dir)) {
             stop(
               paste0("`new_data` has missing values in the predictor `",
-                     node$feature, "`, which had none when the model was ",
-                     "fitted, so no direction was learned for them. Impute ",
-                     "them first (for example with `recipes::step_impute_*()`) ",
-                     "or refit with `na_method = \"mia\"` on data that ",
-                     "contain missing values."),
+                     node$feature, "` at a point in the tree where no direction was ",
+                     "learned for them (either this branch was never reached by a ",
+                     "missing value during training, or the model was fitted with ",
+                     "na_method = \"omit\"). Impute them first (for example with ",
+                     "`recipes::step_impute_*()`) or refit on data where a missing ",
+                     "value of this predictor can reach this branch."),
               call. = FALSE
             )
           }

@@ -102,3 +102,27 @@ test_that("the split search ignores NA when na_method is omit and data are compl
   expect_true(is.na(a$na_dir))
   expect_false(a$split_on_missing)
 })
+
+test_that("factor level order is preserved, not re-sorted alphabetically (complete data, na_method omit)", {
+  # Levels are declared in a deliberately non-alphabetical order. The three
+  # group means are chosen so that isolating "mid" and isolating "low" tie
+  # exactly for the best SSE-reduction, while isolating "high" is strictly
+  # worse: high = 5 is the midpoint of low = 0 and mid = 10, so
+  # (high - low)^2 == (high - mid)^2, but (mid - low)^2 is larger. On an exact
+  # tie, `find_best_split()` keeps whichever candidate it reaches first, and
+  # the order candidates are generated in depends on `levels()`. Round-tripping
+  # through `as.character()` before computing levels re-sorts them
+  # alphabetically ("high", "low", "mid"), which would make "low" win the tie
+  # instead of "mid". Computing levels from the factor directly preserves the
+  # declared order ("high", "mid", "low"), so "mid" must win.
+  n <- 20
+  g <- factor(c(rep("high", n), rep("mid", n), rep("low", n)),
+              levels = c("high", "mid", "low"))
+  y <- c(rep(5, n), rep(10, n), rep(0, n))
+  df <- data.frame(g = g, y = y)
+
+  res <- figsr:::find_best_split(df["g"], df$y, seq_len(3 * n), min_n = 5,
+                                  na_method = "omit")
+
+  expect_identical(res$split_val, "mid")
+})

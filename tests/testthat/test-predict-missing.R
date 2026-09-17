@@ -38,7 +38,39 @@ test_that("a split on missingness sends NA left and everything else right", {
 test_that("NA on a column with no learned direction is a clear error", {
   X <- data.frame(x = c(-1, NA))
   expect_error(figsr:::predict_trees(list(stump("x", 0)), X),
-               "missing values in the predictor `x`, which had none")
+               "no direction was learned", fixed = TRUE)
+})
+
+test_that("the error is accurate when a branch never saw the missing values seen elsewhere in training", {
+  # `x` is missing only for rows where `z <= 0`; the tree first splits on `z`
+  # and only then, inside the `z > 0` branch (where `x` is always observed),
+  # splits on `x`. That `x`-split node never saw a missing value during
+  # training, even though `x` did have missing values elsewhere in the
+  # training data and the model was fitted with na_method = "mia". Predicting
+  # a new row that reaches that branch with `x` missing must still raise a
+  # clear error, and the error must not claim `x` "had none" missing at fit
+  # time, since that would be false.
+  nL <- 100
+  nRh <- 50
+  z <- c(rep(-1, nL), rep(1, 2 * nRh))
+  x <- c(rep(NA_real_, nL), rep(0, nRh), rep(5, nRh))
+  y <- c(rep(100, nL), rep(0, nRh), rep(5, nRh))
+  df <- data.frame(z = z, x = x, y = y)
+
+  fit <- figs(y ~ z + x, data = df, max_splits = 2, na_method = "mia")
+
+  # Confirm the expected tree shape: root splits on z, and the z > 0 branch
+  # splits on x.
+  expect_equal(fit$trees[[1]][[1]]$feature, "z")
+  expect_equal(fit$trees[[1]][[3]]$feature, "x")
+  expect_true(is.na(fit$trees[[1]][[3]]$na_dir))
+
+  new_data <- data.frame(z = 1, x = NA_real_)
+  expect_error(predict(fit, new_data = new_data), "no direction was learned",
+               fixed = TRUE)
+  err <- tryCatch(predict(fit, new_data = new_data), error = function(e) e)
+  expect_false(grepl("which had none when the model was fitted",
+                      conditionMessage(err), fixed = TRUE))
 })
 
 test_that("nodes from a pre-0.2.0 fit (no na fields) still route complete data", {
