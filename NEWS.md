@@ -1,4 +1,4 @@
-# figsr 0.1.1.9000 (development)
+# figsr 0.2.0
 
 ## New features
 

@@ -1,6 +1,6 @@
 Package: figsr
 Title: Fast Interpretable Greedy-Tree Sums for Tree Ensembles
-Version: 0.1.1.9000
+Version: 0.2.0
 Authors@R: c(
     person("João Paulo", "Assis Bonifácio", email = "jpab.27@hotmail.com",
            role = c("aut", "cre", "cph"), comment = c(ORCID = "0009-0009-2335-8391")),
