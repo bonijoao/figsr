@@ -1,5 +1,7 @@
 # figsr: Fast Interpretable Greedy-Tree Sums for R
 
+<img src="man/figures/logo.png" align="right" height="139" alt="figsr logo" />
+
 <!-- badges: start -->
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/figsr)](https://CRAN.R-project.org/package=figsr)
 [![R-CMD-check](https://github.com/bonijoao/figsr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bonijoao/figsr/actions/workflows/R-CMD-check.yaml)
@@ -71,6 +73,14 @@ head(preds)
 - **Interpretability & Visualization**: `summary(fit)` prints logical IF-THEN rules; `plot(fit)` draws visual tree sums.
 - **Variable Importance**: `figsr_importance(fit)` ranks feature impurity reductions.
 - **Bagging-FIGS**: Bootstrap ensembling via `bagging_figs()`.
+
+---
+
+## Cheatsheet
+
+[<img src="man/figures/figsr-cheatsheet-preview.png" width="100%" alt="figsr cheatsheet preview" />](man/figures/figsr-cheatsheet.pdf)
+
+Click the image above to download the full [PDF cheatsheet](man/figures/figsr-cheatsheet.pdf).
 
 ---
 
