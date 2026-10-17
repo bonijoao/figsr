@@ -11,7 +11,7 @@
   cutpoint, and a leaf whose residuals did not change since the last iteration
   keeps its previous best split. The fitted model is unchanged: the same
   splits, cutpoints, missing-value directions and sample indices as 0.2.0,
-  which a new regression test checks on nine data sets.
+  which a new regression test checks on fourteen data sets.
 
 # figsr 0.2.0
 

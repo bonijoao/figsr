@@ -37,6 +37,24 @@ chars$y <- chars$y + 2 * (chars$x2 == "a")
 binary <- simulate(500, 5, seed = 7)
 binary$y <- factor(ifelse(binary$y > 1, "yes", "no"))
 
+# The same partitions offered by two predictors: a mirror image, and a factor
+# copied with its levels reordered. 0.2.0 reports the first predictor.
+mirrored <- function(seed) {
+  set.seed(seed)
+  d <- data.frame(x1 = rnorm(300), x3 = rnorm(300))
+  d$y <- 2 * (d$x1 > 0.3) + d$x3 + rnorm(300, sd = 0.5)
+  d$x2 <- -d$x1
+  d[c("x1", "x2", "x3", "y")]
+}
+relevelled <- function(seed) {
+  set.seed(seed)
+  g <- factor(sample(letters[1:4], 300, replace = TRUE))
+  d <- data.frame(g1 = g, g2 = factor(as.character(g), levels = c("d", "c", "b", "a")),
+                  x3 = rnorm(300))
+  d$y <- (g %in% c("a", "c")) + d$x3 + rnorm(300, sd = 0.5)
+  d
+}
+
 load("data/pima_diabetes.rda")
 
 scenarios <- list(
@@ -54,7 +72,12 @@ scenarios <- list(
   characters = list(formula = y ~ ., data = chars, args = list(max_splits = 10)),
   classification = list(formula = y ~ ., data = binary, args = list(max_splits = 10)),
   pima_mia = list(formula = Outcome ~ ., data = pima_diabetes,
-                  args = list(max_splits = 12, na_method = "mia"))
+                  args = list(max_splits = 12, na_method = "mia")),
+  mirrored_7 = list(formula = y ~ ., data = mirrored(7), args = list(max_splits = 12, min_n = 2)),
+  mirrored_10 = list(formula = y ~ ., data = mirrored(10), args = list(max_splits = 12, min_n = 2)),
+  relevelled_1 = list(formula = y ~ ., data = relevelled(1), args = list(max_splits = 12, min_n = 2)),
+  relevelled_2 = list(formula = y ~ ., data = relevelled(2), args = list(max_splits = 12, min_n = 2)),
+  relevelled_3 = list(formula = y ~ ., data = relevelled(3), args = list(max_splits = 12, min_n = 2))
 )
 
 for (nm in names(scenarios)) {

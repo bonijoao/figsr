@@ -227,14 +227,14 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
     best_global_gain <- -Inf
     best_leaf <- NULL
 
-    # Same order and strict inequality as always: the new root first, then
-    # trees and nodes in increasing order, so the first maximum wins ties.
+    # Same order as always: the new root first, then trees and nodes in
+    # increasing order, so the first maximum wins ties (see `beats()`).
     if (allow_new_tree) {
       if (root$dirty) {
         root$best <- search_candidate(root, residuals, cols, min_n, mia)
         root$dirty <- FALSE
       }
-      if (!is.null(root$best) && root$best$gain > best_global_gain) {
+      if (!is.null(root$best) && beats(root$best$gain, best_global_gain)) {
         best_global_gain <- root$best$gain
         best_leaf <- 0L
       }
@@ -249,7 +249,7 @@ fit_figs_engine <- function(X, y, max_splits = 10, max_trees = NULL, min_n = 5,
           leaves[[s]]$dirty <- FALSE
         }
         cand <- leaves[[s]]$best
-        if (!is.null(cand) && cand$gain > best_global_gain) {
+        if (!is.null(cand) && beats(cand$gain, best_global_gain)) {
           best_global_gain <- cand$gain
           best_leaf <- s
         }
@@ -407,6 +407,19 @@ make_node <- function(id, is_leaf = TRUE, feature = NULL, is_factor = FALSE,
 }
 
 
+# Gains are now accumulated from sums taken in each predictor's own order, so
+# the same partition reached through two predictors (a predictor and its
+# mirror image, a factor and a copy with its levels reordered) can score
+# differently in the last bits. Gains within this relative distance of the
+# incumbent therefore count as tied, and the first candidate in search order
+# keeps winning, as identical partitions always did when every gain was
+# computed in row order.
+TIE_TOL <- 1e-10
+
+beats <- function(gain, incumbent) {
+  incumbent == -Inf || gain > incumbent + TIE_TOL * abs(incumbent)
+}
+
 # SSE reduction of every partition of a node into a left part with residual
 # sum `S_left` over `n_left` rows and the rest, given the node's total `S_tot`
 # over `n_node` rows. The residuals must be centered on the node mean, which
@@ -517,7 +530,7 @@ quantile7_sorted <- function(xs, probs) {
 # offers the three candidates of Twala et al. (2008): NA to the left of each
 # cutpoint (A), NA to the right (B), and NA versus observed on its own (C).
 # They are scored in the order C, A1, B1, A2, B2, ... and, across predictors,
-# the first maximum wins.
+# the first maximum wins (up to `TIE_TOL`).
 search_candidate <- function(cand, residuals, cols, min_n, mia) {
   idx <- cand$idx
   n_node <- length(idx)
@@ -557,8 +570,10 @@ search_candidate <- function(cand, residuals, cols, min_n, mia) {
     }
 
     g <- c(g_C, g_cut)
-    k <- which.max(g)
-    if (length(k) == 0 || !(g[k] > best_gain)) next
+    top <- if (length(g) > 0) max(g) else -Inf
+    if (top == -Inf) next
+    k <- which(g >= top - TIE_TOL * abs(top))[1]
+    if (!beats(g[k], best_gain)) next
     best_gain <- g[k]
     if (has_na && k == 1) {
       best <- list(gain = g[k], j = j, split_on_missing = TRUE, k = NA_integer_,
