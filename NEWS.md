@@ -1,5 +1,16 @@
 # figsr (development version)
 
+## New features
+
+* `ggfigs()` draws a fitted model with 'ggplot2', in five views:
+  `"tree"` (node-link diagram of every tree), `"rules"` (every tree as a
+  horizontal rule list, with `+` between trees), `"waterfall"` (where the
+  prediction for one observation comes from), `"cuts"` (the numeric
+  cutpoints drawn over the data) and `"profile"` (exact partial dependence).
+  It returns a `ggplot`; with `interactive = TRUE` it returns a 'ggiraph'
+  widget whose tooltips show the rule behind each node, leaf or cut.
+  'ggiraph' is only suggested. `autoplot()` gives the same `ggplot`s.
+
 ## Performance
 
 * The split search was rewritten and fitting is about 25 to 60 times faster
