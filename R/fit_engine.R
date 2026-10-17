@@ -494,7 +494,9 @@ finish_index <- function(col, ord, miss_rows) {
     out$subsets <- subsets
   } else {
     xs <- col$x[ord]
-    vals <- xs[c(TRUE, diff(xs) != 0)]
+    # Compare neighbors rather than test `diff(xs) != 0`: Inf - Inf is NaN, so
+    # repeated infinite values would otherwise leave NA among the unique values.
+    vals <- xs[c(TRUE, xs[-1] != xs[-length(xs)])]
     if (length(vals) <= 1) return(out)
     cutpoints <- (vals[-length(vals)] + vals[-1]) / 2
     if (length(cutpoints) > 30) {

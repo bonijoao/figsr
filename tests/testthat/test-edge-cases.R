@@ -109,3 +109,13 @@ test_that("predictions are unchanged by the index-set traversal", {
 
   expect_equal(predict(fit, new_data = df)$.pred, by_row)
 })
+
+test_that("repeated infinite predictor values do not break the split search", {
+  df <- data.frame(x = c(1:10, Inf, Inf, Inf, -Inf, -Inf),
+                   y = c(rep(0, 6), rep(5, 7), 0, 0))
+  fit <- figs(y ~ x, data = df, min_n = 1, max_splits = 3)
+
+  expect_identical(fit$trees[[1]][[1]]$feature, "x")
+  expect_identical(fit$trees[[1]][[1]]$split_val, 6.5)
+  expect_true(all(is.finite(predict(fit, new_data = df)$.pred)))
+})
