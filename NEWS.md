@@ -1,3 +1,18 @@
+# figsr (development version)
+
+## Performance
+
+* The split search was rewritten and fitting is about 25 to 60 times faster
+  (for example, 12.6 s to 0.33 s with 32,000 rows, 10 numeric predictors and
+  `max_splits = 10`), allocating about 30 times less memory. Everything that depends on
+  the predictors alone (row order, cutpoints, level groups) is computed once
+  per node instead of once per iteration, every cutpoint of a predictor is
+  scored from a single cumulative sum of the residuals instead of one pass per
+  cutpoint, and a leaf whose residuals did not change since the last iteration
+  keeps its previous best split. The fitted model is unchanged: the same
+  splits, cutpoints, missing-value directions and sample indices as 0.2.0,
+  which a new regression test checks on nine data sets.
+
 # figsr 0.2.0
 
 ## Documentation
