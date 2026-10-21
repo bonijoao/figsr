@@ -71,7 +71,7 @@ head(preds)
 
 - **Tidymodels & Parsnip Integration**: `figs_tree()` model specification.
 - **Hyperparameter Tuning**: Tune `max_splits` and `max_trees` with `tune_grid()`.
-- **Interpretability & Visualization**: `summary(fit)` prints logical IF-THEN rules; `plot(fit)` draws visual tree sums.
+- **Interpretability & Visualization**: `summary(fit)` prints logical IF-THEN rules; `ggfigs(fit)` (or `autoplot(fit)`) draws the fit with 'ggplot2' as a tree, rule list, waterfall, cutpoint or partial dependence view, optionally interactive; `plot(fit)` draws tree sums in base graphics.
 - **Variable Importance**: `figsr_importance(fit)` ranks feature impurity reductions.
 - **Bagging-FIGS**: Bootstrap ensembling via `bagging_figs()`.
 
@@ -85,3 +85,9 @@ Click the image above to download the full [PDF cheatsheet](man/figures/figsr-ch
 
 ---
 
+## Documentation
+
+The package website, <https://bonijoao.github.io/figsr/>, has the full
+function reference and the articles (getting started, missing values).
+
+---
