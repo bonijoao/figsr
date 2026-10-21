@@ -11,6 +11,16 @@
   widget whose tooltips show the rule behind each node, leaf or cut.
   'ggiraph' is only suggested. `autoplot()` gives the same `ggplot`s.
 
+## Bug fixes
+
+* `plot()` no longer draws boxes on top of each other. Nodes used to sit on a
+  fixed grid, so in deeper trees neighboring leaves and branch conditions
+  overlapped and their labels were cut off. Each split now places its
+  subtrees from the width of their labels, every tree gets a panel width
+  proportional to the room it needs, and all trees share one vertical scale,
+  so their roots line up. A drawing too large for its panel is scaled down,
+  text included, instead of clipped.
+
 ## Performance
 
 * The split search was rewritten and fitting is about 25 to 60 times faster
