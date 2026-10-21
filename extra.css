@@ -7,7 +7,9 @@
 
 /* Plots are rendered with a transparent background, and in dark mode pkgdown
    inverts them (filter: invert() hue-rotate()), which turns them black and
-   flips the leaf colors. Keep them as drawn, on white, in both themes. */
+   flips the leaf colors. Keep them as drawn, on white, in both themes. The
+   same filter hits the interactive ggfigs() widgets, which draw their own
+   white background. */
 img.r-plt,
 .r-plt img {
   background-color: #ffffff;
@@ -15,6 +17,7 @@ img.r-plt,
 }
 
 [data-bs-theme="dark"] img.r-plt,
-[data-bs-theme="dark"] pre .r-plt.img img {
+[data-bs-theme="dark"] pre .r-plt.img img,
+[data-bs-theme="dark"] .html-widget {
   filter: none;
 }
