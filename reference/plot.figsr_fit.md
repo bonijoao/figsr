@@ -4,6 +4,12 @@
 Fast Interpretable Greedy-Tree Sums (FIGS) model using 100% Base R
 graphics (zero external package dependencies).
 
+Nodes are spaced from the width of their own labels, so boxes and branch
+conditions never overlap, and each tree gets a panel width proportional
+to the room it needs. When a tree does not fit its panel, the whole
+drawing is scaled down – text included – rather than clipped; enlarge
+the device to get larger text.
+
 ## Usage
 
 ``` r
