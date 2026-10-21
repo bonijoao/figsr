@@ -1,0 +1,4 @@
+# License
+
+    YEAR: 2026
+    COPYRIGHT HOLDER: João Paulo Assis Bonifácio, Geraldo Magela da Cruz Pereira, Pedro Mambelli Fernandes, João Vitor Andrade Alves de Souza
