@@ -8,20 +8,16 @@ template:
     base_font: {google: "Fira Sans"}
     heading_font: {google: "Fira Sans"}
     code_font: {google: "Fira Mono"}
-    primary: "#2c6e49"
-    link-color: "#2c6e49"
+    primary: "#1a4f71"
+    link-color: "#1a4f71"
   math-rendering: katex
   theme: tango
 
 navbar:
   type: light
   structure:
-    left: [intro, reference, articles, paper, news]
+    left: [intro, reference, articles, news]
     right: [search, github, lightswitch]
-  components:
-    paper:
-      text: PNAS paper
-      href: https://doi.org/10.1073/pnas.2310151122
 
 home:
   sidebar:
