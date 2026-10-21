@@ -209,7 +209,7 @@ ggfigs_tree <- function(x, tree_idx = NULL, digits = 3, interactive = FALSE,
     ggplot2::scale_fill_gradient2(
       low = FIGS_PAL$div_low, mid = FIGS_PAL$div_mid, high = FIGS_PAL$div_high,
       midpoint = 0, limits = c(-lim, lim),
-      name = "leaf value: what it adds to the sum") +
+      name = "Leaf value") +
     ggplot2::guides(fill = ggplot2::guide_colourbar(
       barheight = ggplot2::unit(5, "pt"), barwidth = ggplot2::unit(90, "pt"),
       ticks.colour = NA, title.position = "top")) +
@@ -217,16 +217,8 @@ ggfigs_tree <- function(x, tree_idx = NULL, digits = 3, interactive = FALSE,
     ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = 0.1)) +
     ggplot2::coord_fixed(ratio = 1, clip = "off") +
     ggplot2::labs(
-      title = "FIGS tree sum",
-      subtitle = sprintf(
-        "%d tree%s, %d split%s -- the prediction is the sum of one leaf per tree%s",
-        length(x$trees), if (length(x$trees) == 1) "" else "s",
-        x$total_splits, if (x$total_splits == 1) "" else "s",
-        if (x$mode == "classification")
-          sprintf(", read as P(y = \"%s\")", x$classes[2]) else ""),
-      caption = paste0("leaf labels are the values added to the sum; edge ",
-                       "width scales with the number of observations",
-                       if (interactive) "\nhover a leaf to trace its route" else "")) +
+      title = "FIGS trees",
+      subtitle = size_label(x)) +
     theme_figs()
 
   if (!interactive) return(p)
@@ -287,7 +279,7 @@ ggfigs_waterfall <- function(x, newdata, digits = 3, interactive = FALSE,
   # the intercept is 0 whenever at least one tree exists; a zero bar is noise
   if (abs(x$intercept) > 1e-12 || !length(x$trees)) {
     vals  <- c(x$intercept, vals)
-    labs  <- c("intercept", labs)
+    labs  <- c("Intercept", labs)
     rules <- c("model baseline (no split was accepted)", rules)
   }
 
@@ -296,7 +288,7 @@ ggfigs_waterfall <- function(x, newdata, digits = 3, interactive = FALSE,
   total <- cum[length(cum)]
 
   d <- data.frame(
-    step  = factor(c(labs, "prediction"), levels = c(labs, "prediction")),
+    step  = factor(c(labs, "Prediction"), levels = c(labs, "Prediction")),
     i     = seq_len(length(vals) + 1),
     start = c(start, 0),
     end   = c(cum, total),
@@ -342,16 +334,15 @@ ggfigs_waterfall <- function(x, newdata, digits = 3, interactive = FALSE,
                                 expand = ggplot2::expansion(add = 0.5)) +
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.08, 0.14))) +
     ggplot2::labs(
-      title = "Where this prediction comes from",
-      subtitle = paste("each tree of the sum contributes the value of the",
-                       "single leaf the observation lands on"),
-      x = NULL, y = NULL,
-      caption = if (interactive)
-        "hover a bar for the rule that routed this observation to that leaf") +
+      title = "Prediction breakdown",
+      x = NULL, y = value_label(x)) +
     theme_figs() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text(colour = FIGS_PAL$ink_2, size = 9,
                                           margin = ggplot2::margin(t = 5)),
+      axis.title.y = ggplot2::element_text(colour = FIGS_PAL$ink_2, size = 9,
+                                           angle = 90,
+                                           margin = ggplot2::margin(r = 6)),
       axis.text.y = ggplot2::element_text(colour = FIGS_PAL$muted, size = 8,
                                           hjust = 1),
       panel.grid.major.y = ggplot2::element_line(colour = FIGS_PAL$grid,

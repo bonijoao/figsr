@@ -210,6 +210,28 @@ fmt_signed <- function(v, digits = 3) {
 # entities instead.
 f_label <- function(k) paste0("f", k, "(x)")
 
+# Scale of the leaf values: the response, or P(response = second class).
+response_name <- function(x) paste(deparse(x$terms[[2L]]), collapse = "")
+
+value_label <- function(x) {
+  if (x$mode != "classification") return(response_name(x))
+  sprintf("P(%s = %s)", response_name(x), x$classes[2])
+}
+
+# "3 trees, 7 splits", plus the intercept when there is one and, for
+# classification, the scale of the leaf values.
+size_label <- function(x) {
+  n_t <- length(x$trees)
+  n_s <- x$total_splits
+  out <- sprintf("%d tree%s, %d split%s", n_t, if (n_t == 1) "" else "s",
+                 n_s, if (n_s == 1) "" else "s")
+  if (x$intercept != 0) out <- paste0(out, ", intercept ", fmt_num(x$intercept))
+  if (x$mode == "classification") {
+    out <- paste0(out, "; leaf values are ", value_label(x))
+  }
+  out
+}
+
 has_na_dir <- function(node) {
   length(node$na_dir) == 1L && !is.na(node$na_dir)
 }

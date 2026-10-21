@@ -246,14 +246,8 @@ ggfigs_rules <- function(x, data = NULL, digits = 3, interactive = FALSE,
       guide = "none") +
     ggplot2::coord_fixed(ratio = 1, clip = "off") +
     ggplot2::labs(
-      title = "FIGS rule lists",
-      subtitle = paste0(
-        "Prediction = sum of one leaf value per tree",
-        if (x$intercept != 0) paste0(" + intercept ", fmt_num(x$intercept, digits)),
-        if (x$mode == "classification")
-          sprintf(", read as P(y = \"%s\")", x$classes[2])),
-      caption = paste0("Yes = the condition in the box holds",
-                       if (is.null(y)) "; pass `data =` for outcome rates per box")) +
+      title = "FIGS rules",
+      subtitle = size_label(x)) +
     theme_figs()
 
   if (!is.null(plus)) {

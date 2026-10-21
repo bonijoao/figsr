@@ -56,12 +56,9 @@ ggfigs_cuts <- function(x, data = NULL, digits = 3, interactive = FALSE,
                                  FUN = seq_along) %% 7 - 3) * 0.022
   }
 
-  caption <- "one panel per predictor with a numeric cut"
-  if (nrow(other)) {
-    caption <- paste0(caption, "; not drawn, as they have no cutpoint: ",
-                      paste(unique(other$label), collapse = ", "))
+  caption <- if (nrow(other)) {
+    paste("Factor splits not shown:", paste(unique(other$label), collapse = ", "))
   }
-  if (interactive) caption <- paste0(caption, "\nhover a line for the node behind it")
 
   p <- ggplot2::ggplot() +
     ggplot2::geom_point(
@@ -84,11 +81,9 @@ ggfigs_cuts <- function(x, data = NULL, digits = 3, interactive = FALSE,
     y_scale +
     ggplot2::facet_wrap(~ feature, scales = "free_x") +
     ggplot2::labs(
-      title = "Where the model cut",
-      subtitle = paste("every numeric split drawn on the data it was chosen",
-                       "from; line width proportional to the SSE gain"),
+      title = "Split points",
       x = NULL,
-      y = if (classification) "observed outcome" else "response",
+      y = response_name(x),
       caption = caption) +
     theme_figs() +
     theme_figs_axes()
@@ -167,14 +162,10 @@ ggfigs_profile <- function(x, data = NULL, digits = 3, interactive = FALSE,
       colour = FIGS_PAL$div_low, linewidth = 0.9, direction = "hv") +
     ggplot2::facet_wrap(~ feature, scales = "free_x") +
     ggplot2::labs(
-      title = "What each predictor does to the prediction",
-      subtitle = paste("partial dependence: the predictor is swept over its",
-                       "range in every row and the predictions averaged"),
+      title = "Partial dependence",
       x = NULL,
-      y = if (x$mode == "classification")
-        sprintf("average P(%s)", x$classes[2]) else "average prediction",
-      caption = paste("dashed lines mark the cutpoints; a step in the curve",
-                      "is a cut taking effect")) +
+      y = sprintf(if (x$mode == "classification") "Average %s" else
+        "Average predicted %s", value_label(x))) +
     theme_figs() +
     theme_figs_axes()
 
