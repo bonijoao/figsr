@@ -140,6 +140,25 @@ test_that("cuts names the splits it cannot draw", {
   expect_match(p$labels$caption, "size in {small}", fixed = TRUE)
 })
 
+test_that("titles name the view and axes name the response", {
+  reg <- fits$regression
+  titles <- vapply(types, function(type) {
+    ggfigs(reg$fit, type, data = reg$data, newdata = reg$data[1, ])$labels$title
+  }, character(1))
+  expect_identical(unname(titles), c("FIGS trees", "FIGS rules",
+    "Prediction breakdown", "Split points", "Partial dependence"))
+  expect_identical(ggfigs(reg$fit)$labels$subtitle, "3 trees, 6 splits")
+  expect_identical(ggfigs(reg$fit, "cuts", data = mtcars)$labels$y, "mpg")
+  expect_identical(ggfigs(reg$fit, "profile", data = mtcars)$labels$y,
+                   "Average predicted mpg")
+
+  cl <- fits$formula_outcome$fit
+  expect_match(ggfigs(cl)$labels$subtitle, "leaf values are P(factor(am) = 1)",
+               fixed = TRUE)
+  expect_identical(ggfigs(cl, "waterfall", newdata = mtcars[1, ])$labels$y,
+                   "P(factor(am) = 1)")
+})
+
 test_that("ggfigs() rejects bad input with clear errors", {
   fit <- fits$regression$fit
   expect_error(ggfigs(lm(mpg ~ wt, mtcars)), "`figsr_fit` object")
