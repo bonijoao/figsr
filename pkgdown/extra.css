@@ -1,0 +1,6 @@
+/* No logo on the home page: neither pkgdown's own nor the one in README.md,
+   which stays for GitHub. */
+.template-home .page-header img.logo,
+.template-home main img[alt="figsr logo"] {
+  display: none;
+}

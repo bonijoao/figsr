@@ -1,0 +1,78 @@
+url: https://bonijoao.github.io/figsr/
+
+template:
+  bootstrap: 5
+  light-switch: true
+  bootswatch: flatly
+  bslib:
+    base_font: {google: "Fira Sans"}
+    heading_font: {google: "Fira Sans"}
+    code_font: {google: "Fira Mono"}
+    primary: "#2c6e49"
+    link-color: "#2c6e49"
+  math-rendering: katex
+  theme: tango
+
+navbar:
+  type: light
+  structure:
+    left: [intro, reference, articles, paper, news]
+    right: [search, github, lightswitch]
+  components:
+    paper:
+      text: PNAS paper
+      href: https://doi.org/10.1073/pnas.2310151122
+
+home:
+  sidebar:
+    structure: [links, license, citation, authors, dev]
+  links:
+    - text: Cheatsheet (PDF)
+      href: reference/figures/figsr-cheatsheet.pdf
+
+reference:
+  - title: Package
+    desc: The figsr package.
+    contents:
+      - figsr-package
+  - title: Fitting
+    desc: Fit a sum of trees from a formula, or a bootstrap ensemble of them.
+    contents:
+      - figs
+      - bagging_figs
+  - title: Prediction
+    desc: Tidy predictions from a fitted model.
+    contents:
+      - predict.figsr_fit
+      - predict.bagging_figs_fit
+      - predict_figs
+  - title: Rules and importance
+    desc: Read a fit as IF-THEN rules and rank its predictors.
+    contents:
+      - print.figsr_fit
+      - summary.figsr_fit
+      - figsr_importance
+  - title: Plotting
+    desc: Draw a fit with 'ggplot2' or base graphics.
+    contents:
+      - ggfigs
+      - plot.figsr_fit
+  - title: tidymodels integration
+    desc: The 'parsnip' model specification, its engine bridge and tuning parameters.
+    contents:
+      - figs_tree
+      - update.figs_tree
+      - fit_figs
+      - max_splits
+      - max_trees
+  - title: Data
+    desc: Data sets used in the examples and articles.
+    contents:
+      - pima_diabetes
+
+articles:
+  - title: Articles
+    navbar: ~
+    contents:
+      - figsr-intro
+      - missing-values
