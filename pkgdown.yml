@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   figsr-intro: figsr-intro.html
   missing-values: missing-values.html
-last_built: 2026-10-21T02:08Z
+last_built: 2026-10-21T02:45Z
 urls:
   reference: https://bonijoao.github.io/figsr/reference
   article: https://bonijoao.github.io/figsr/articles
