@@ -26,6 +26,10 @@ home:
     - text: Cheatsheet (PDF)
       href: reference/figures/figsr-cheatsheet.pdf
 
+authors:
+  João Paulo Assis Bonifácio:
+    href: https://bonijoao.github.io/
+
 reference:
   - title: Package
     desc: The figsr package.
