@@ -9,7 +9,8 @@
 # onset of diabetes mellitus. Proceedings of the Symposium on Computer
 # Applications and Medical Care, 261-265. Distributed by the UCI Machine
 # Learning Repository and, from there, on Kaggle as
-# kaggle.com/datasets/uciml/pima-indians-diabetes-database.
+# kaggle.com/datasets/uciml/pima-indians-diabetes-database (the raw CSV was
+# downloaded from that page, which has since been removed).
 
 raw <- read.csv("data-raw/pima-diabetes-raw.csv")
 

@@ -1,6 +1,15 @@
-# figsr (development version)
+# figsr 0.2.0
 
 ## New features
+
+* `figs()`, `fit_figs()` and `bagging_figs()` gained `na_method`. The default
+  `"omit"` is the previous behavior. `"mia"` (missingness incorporated in
+  attributes, Twala et al. 2008) keeps every row: at each split the search
+  also tries sending missing values left or right of the cutpoint, and
+  splitting on missingness itself, and uses the learned direction at
+  prediction time. `summary()` prints these as `IS MISSING` clauses, `plot()`
+  labels the edge missing values take, and `figsr_importance()` reports a
+  split on missingness on its own `missing(<predictor>)` row.
 
 * `ggfigs()` draws a fitted model with 'ggplot2', in five views:
   `"tree"` (node-link diagram of every tree), `"rules"` (every tree as a
@@ -11,15 +20,14 @@
   widget whose tooltips show the rule behind each node, leaf or cut.
   'ggiraph' is only suggested. `autoplot()` gives the same `ggplot`s.
 
-## Bug fixes
-
-* `plot()` no longer draws boxes on top of each other. Nodes used to sit on a
-  fixed grid, so in deeper trees neighboring leaves and branch conditions
-  overlapped and their labels were cut off. Each split now places its
-  subtrees from the width of their labels, every tree gets a panel width
-  proportional to the room it needs, and all trees share one vertical scale,
-  so their roots line up. A drawing too large for its panel is scaled down,
-  text included, instead of clipped.
+* `plot()` gained `main`, an overall title drawn once above every tree
+  panel, and `tree_names`, overriding the automatic per-tree panel titles
+  (a single string applies to every tree; a vector is indexed by each
+  tree's position in the fit, so it stays correct when `tree_idx` only
+  plots some of them; `NA` in a position keeps that tree's default title).
+  In the `"scientific"` and `"modern"` styles, a leaf's background, border
+  and text now depend on the sign of its contribution -- green for
+  positive, red for negative; `"classic"` stays monochromatic by design.
 
 ## Performance
 
@@ -31,17 +39,22 @@
   scored from a single cumulative sum of the residuals instead of one pass per
   cutpoint, and a leaf whose residuals did not change since the last iteration
   keeps its previous best split. The fitted model is unchanged: the same
-  splits, cutpoints, missing-value directions and sample indices as 0.2.0,
-  which a new regression test checks on fourteen data sets.
+  splits, cutpoints, missing-value directions and sample indices as the
+  previous search, which a new regression test checks on fourteen data sets.
 
-# figsr 0.2.0
+## Bug fixes
 
-## Documentation
+* The `parsnip` engine now fits through the formula interface. The previous
+  data.frame interface ran `model.frame()` with `na.omit` before the engine,
+  so `fit()` silently dropped rows with a missing predictor.
 
-* A new vignette, `vignette("missing-values")`, works through `na_method =
-  "mia"` on the real Pima Indians Diabetes Database, where missingness is
-  informative but modest, and shows `plot()`'s new `main`, `tree_names` and
-  sign-colored leaves on it.
+* `plot()` no longer draws boxes on top of each other. Nodes used to sit on a
+  fixed grid, so in deeper trees neighboring leaves and branch conditions
+  overlapped and their labels were cut off. Each split now places its
+  subtrees from the width of their labels, every tree gets a panel width
+  proportional to the room it needs, and all trees share one vertical scale,
+  so their roots line up. A drawing too large for its panel is scaled down,
+  text included, instead of clipped.
 
 ## New data
 
@@ -51,31 +64,12 @@
   `BMI`) are already recoded to `NA`, so it is ready to demonstrate
   `na_method = "mia"` without an internet connection or preprocessing.
 
-## New features
+## Documentation
 
-* `plot()` gained `main`, an overall title drawn once above every tree
-  panel, and `tree_names`, overriding the automatic per-tree panel titles
-  (a single string applies to every tree; a vector is indexed by each
-  tree's position in the fit, so it stays correct when `tree_idx` only
-  plots some of them; `NA` in a position keeps that tree's default title).
-  In the `"scientific"` and `"modern"` styles, a leaf's background, border
-  and text now depend on the sign of its contribution -- green for
-  positive, red for negative; `"classic"` stays monochromatic by design.
-
-* `figs()`, `fit_figs()` and `bagging_figs()` gained `na_method`. The default
-  `"omit"` is the previous behavior. `"mia"` (missingness incorporated in
-  attributes, Twala et al. 2008) keeps every row: at each split the search
-  also tries sending missing values left or right of the cutpoint, and
-  splitting on missingness itself, and uses the learned direction at
-  prediction time. `summary()` prints these as `IS MISSING` clauses, `plot()`
-  labels the edge missing values take, and `figsr_importance()` reports a
-  split on missingness on its own `missing(<predictor>)` row.
-
-## Bug fixes
-
-* The `parsnip` engine now fits through the formula interface. The previous
-  data.frame interface ran `model.frame()` with `na.omit` before the engine,
-  so `fit()` silently dropped rows with a missing predictor.
+* A new vignette, `vignette("missing-values")`, works through `na_method =
+  "mia"` on the real Pima Indians Diabetes Database, where missingness is
+  informative but modest, and shows `plot()`'s new `main`, `tree_names` and
+  sign-colored leaves on it.
 
 # figsr 0.1.1
 

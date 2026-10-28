@@ -1,6 +1,6 @@
 # figsr: Fast Interpretable Greedy-Tree Sums for R
 
-<img src="man/figures/logo.png" align="right" height="139" alt="figsr logo" />
+<img src="https://bonijoao.github.io/figsr/reference/figures/logo.png" align="right" height="139" alt="figsr logo" />
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/figsr)](https://CRAN.R-project.org/package=figsr)
@@ -79,9 +79,9 @@ head(preds)
 
 ## Cheatsheet
 
-[<img src="man/figures/figsr-cheatsheet-preview.png" width="100%" alt="figsr cheatsheet preview" />](man/figures/figsr-cheatsheet.pdf)
+[<img src="https://bonijoao.github.io/figsr/reference/figures/figsr-cheatsheet-preview.png" width="100%" alt="figsr cheatsheet preview" />](https://bonijoao.github.io/figsr/reference/figures/figsr-cheatsheet.pdf)
 
-Click the image above to download the full [PDF cheatsheet](man/figures/figsr-cheatsheet.pdf).
+Click the image above to download the full [PDF cheatsheet](https://bonijoao.github.io/figsr/reference/figures/figsr-cheatsheet.pdf).
 
 ---
 
