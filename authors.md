@@ -18,7 +18,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/bonijoao/figsr/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/bonijoao/figsr/blob/v0.2.0/DESCRIPTION)
 
 Assis Bonifácio J, da Cruz Pereira G, Mambelli Fernandes P, Andrade
 Alves de Souza J (2026). *figsr: Fast Interpretable Greedy-Tree Sums for

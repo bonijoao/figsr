@@ -2,6 +2,8 @@
 
 ## figsr 0.2.0
 
+CRAN release: 2026-10-28
+
 ### New features
 
 - [`figs()`](https://bonijoao.github.io/figsr/reference/figs.md),
