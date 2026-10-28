@@ -1,3 +1,5 @@
+# figsr (development version)
+
 # figsr 0.2.0
 
 ## New features
