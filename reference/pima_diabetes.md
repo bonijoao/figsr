@@ -59,9 +59,9 @@ A data frame with 768 rows and 9 columns:
 Smith, J. W., Everhart, J. E., Dickson, W. C., Knowler, W. C., and
 Johannes, R. S. (1988). Using the ADAP learning algorithm to forecast
 the onset of diabetes mellitus. *Proceedings of the Symposium on
-Computer Applications and Medical Care*, 261-265. Distributed by the UCI
-Machine Learning Repository and, from there, on Kaggle as
-<https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database>.
+Computer Applications and Medical Care*, 261-265,
+<https://pmc.ncbi.nlm.nih.gov/articles/PMC2245318/>. The data were long
+distributed by the UCI Machine Learning Repository.
 
 ## Details
 

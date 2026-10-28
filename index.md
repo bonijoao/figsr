@@ -1,6 +1,7 @@
 # figsr: Fast Interpretable Greedy-Tree Sums for R
 
-![figsr logo](reference/figures/logo.png)
+![figsr
+logo](https://bonijoao.github.io/figsr/reference/figures/logo.png)
 
 **figsr** is an R implementation of **Fast Interpretable Greedy-Tree
 Sums (‘FIGS’)**, developed by researchers at UC Berkeley and Stanford
@@ -93,10 +94,10 @@ head(preds)
 ## Cheatsheet
 
 [![figsr cheatsheet
-preview](reference/figures/figsr-cheatsheet-preview.png)](https://bonijoao.github.io/figsr/man/figures/figsr-cheatsheet.pdf)
+preview](https://bonijoao.github.io/figsr/reference/figures/figsr-cheatsheet-preview.png)](https://bonijoao.github.io/figsr/reference/figures/figsr-cheatsheet.pdf)
 
 Click the image above to download the full [PDF
-cheatsheet](https://bonijoao.github.io/figsr/man/figures/figsr-cheatsheet.pdf).
+cheatsheet](https://bonijoao.github.io/figsr/reference/figures/figsr-cheatsheet.pdf).
 
 ------------------------------------------------------------------------
 

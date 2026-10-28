@@ -1,77 +1,8 @@
 # Changelog
 
-## figsr (development version)
-
-### New features
-
-- [`ggfigs()`](https://bonijoao.github.io/figsr/reference/ggfigs.md)
-  draws a fitted model with ‘ggplot2’, in five views: `"tree"`
-  (node-link diagram of every tree), `"rules"` (every tree as a
-  horizontal rule list, with `+` between trees), `"waterfall"` (where
-  the prediction for one observation comes from), `"cuts"` (the numeric
-  cutpoints drawn over the data) and `"profile"` (exact partial
-  dependence). It returns a `ggplot`; with `interactive = TRUE` it
-  returns a ‘ggiraph’ widget whose tooltips show the rule behind each
-  node, leaf or cut. ‘ggiraph’ is only suggested.
-  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-  gives the same `ggplot`s.
-
-### Bug fixes
-
-- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) no longer
-  draws boxes on top of each other. Nodes used to sit on a fixed grid,
-  so in deeper trees neighboring leaves and branch conditions overlapped
-  and their labels were cut off. Each split now places its subtrees from
-  the width of their labels, every tree gets a panel width proportional
-  to the room it needs, and all trees share one vertical scale, so their
-  roots line up. A drawing too large for its panel is scaled down, text
-  included, instead of clipped.
-
-### Performance
-
-- The split search was rewritten and fitting is about 25 to 60 times
-  faster (for example, 12.6 s to 0.33 s with 32,000 rows, 10 numeric
-  predictors and `max_splits = 10`), allocating about 30 times less
-  memory. Everything that depends on the predictors alone (row order,
-  cutpoints, level groups) is computed once per node instead of once per
-  iteration, every cutpoint of a predictor is scored from a single
-  cumulative sum of the residuals instead of one pass per cutpoint, and
-  a leaf whose residuals did not change since the last iteration keeps
-  its previous best split. The fitted model is unchanged: the same
-  splits, cutpoints, missing-value directions and sample indices as
-  0.2.0, which a new regression test checks on fourteen data sets.
-
 ## figsr 0.2.0
 
-### Documentation
-
-- A new vignette,
-  [`vignette("missing-values")`](https://bonijoao.github.io/figsr/articles/missing-values.md),
-  works through `na_method = "mia"` on the real Pima Indians Diabetes
-  Database, where missingness is informative but modest, and shows
-  [`plot()`](https://rdrr.io/r/graphics/plot.default.html)’s new `main`,
-  `tree_names` and sign-colored leaves on it.
-
-### New data
-
-- `pima_diabetes`: the Pima Indians Diabetes Database (Smith et
-  al. 1988), 768 patients, ships lazily loaded like `iris`. Its five
-  physiologically impossible zeros (`Glucose`, `BloodPressure`,
-  `SkinThickness`, `Insulin`, `BMI`) are already recoded to `NA`, so it
-  is ready to demonstrate `na_method = "mia"` without an internet
-  connection or preprocessing.
-
 ### New features
-
-- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) gained
-  `main`, an overall title drawn once above every tree panel, and
-  `tree_names`, overriding the automatic per-tree panel titles (a single
-  string applies to every tree; a vector is indexed by each tree’s
-  position in the fit, so it stays correct when `tree_idx` only plots
-  some of them; `NA` in a position keeps that tree’s default title). In
-  the `"scientific"` and `"modern"` styles, a leaf’s background, border
-  and text now depend on the sign of its contribution – green for
-  positive, red for negative; `"classic"` stays monochromatic by design.
 
 - [`figs()`](https://bonijoao.github.io/figsr/reference/figs.md),
   [`fit_figs()`](https://bonijoao.github.io/figsr/reference/fit_figs.md)
@@ -89,6 +20,43 @@
   [`figsr_importance()`](https://bonijoao.github.io/figsr/reference/figsr_importance.md)
   reports a split on missingness on its own `missing(<predictor>)` row.
 
+- [`ggfigs()`](https://bonijoao.github.io/figsr/reference/ggfigs.md)
+  draws a fitted model with ‘ggplot2’, in five views: `"tree"`
+  (node-link diagram of every tree), `"rules"` (every tree as a
+  horizontal rule list, with `+` between trees), `"waterfall"` (where
+  the prediction for one observation comes from), `"cuts"` (the numeric
+  cutpoints drawn over the data) and `"profile"` (exact partial
+  dependence). It returns a `ggplot`; with `interactive = TRUE` it
+  returns a ‘ggiraph’ widget whose tooltips show the rule behind each
+  node, leaf or cut. ‘ggiraph’ is only suggested.
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  gives the same `ggplot`s.
+
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) gained
+  `main`, an overall title drawn once above every tree panel, and
+  `tree_names`, overriding the automatic per-tree panel titles (a single
+  string applies to every tree; a vector is indexed by each tree’s
+  position in the fit, so it stays correct when `tree_idx` only plots
+  some of them; `NA` in a position keeps that tree’s default title). In
+  the `"scientific"` and `"modern"` styles, a leaf’s background, border
+  and text now depend on the sign of its contribution – green for
+  positive, red for negative; `"classic"` stays monochromatic by design.
+
+### Performance
+
+- The split search was rewritten and fitting is about 25 to 60 times
+  faster (for example, 12.6 s to 0.33 s with 32,000 rows, 10 numeric
+  predictors and `max_splits = 10`), allocating about 30 times less
+  memory. Everything that depends on the predictors alone (row order,
+  cutpoints, level groups) is computed once per node instead of once per
+  iteration, every cutpoint of a predictor is scored from a single
+  cumulative sum of the residuals instead of one pass per cutpoint, and
+  a leaf whose residuals did not change since the last iteration keeps
+  its previous best split. The fitted model is unchanged: the same
+  splits, cutpoints, missing-value directions and sample indices as the
+  previous search, which a new regression test checks on fourteen data
+  sets.
+
 ### Bug fixes
 
 - The `parsnip` engine now fits through the formula interface. The
@@ -97,6 +65,33 @@
   `na.omit` before the engine, so
   [`fit()`](https://generics.r-lib.org/reference/fit.html) silently
   dropped rows with a missing predictor.
+
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) no longer
+  draws boxes on top of each other. Nodes used to sit on a fixed grid,
+  so in deeper trees neighboring leaves and branch conditions overlapped
+  and their labels were cut off. Each split now places its subtrees from
+  the width of their labels, every tree gets a panel width proportional
+  to the room it needs, and all trees share one vertical scale, so their
+  roots line up. A drawing too large for its panel is scaled down, text
+  included, instead of clipped.
+
+### New data
+
+- `pima_diabetes`: the Pima Indians Diabetes Database (Smith et
+  al. 1988), 768 patients, ships lazily loaded like `iris`. Its five
+  physiologically impossible zeros (`Glucose`, `BloodPressure`,
+  `SkinThickness`, `Insulin`, `BMI`) are already recoded to `NA`, so it
+  is ready to demonstrate `na_method = "mia"` without an internet
+  connection or preprocessing.
+
+### Documentation
+
+- A new vignette,
+  [`vignette("missing-values")`](https://bonijoao.github.io/figsr/articles/missing-values.md),
+  works through `na_method = "mia"` on the real Pima Indians Diabetes
+  Database, where missingness is informative but modest, and shows
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html)’s new `main`,
+  `tree_names` and sign-colored leaves on it.
 
 ## figsr 0.1.1
 

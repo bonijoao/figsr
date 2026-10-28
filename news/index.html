@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">figsr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,27 +43,21 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="figsr-development-version">figsr (development version)<a class="anchor" aria-label="anchor" href="#figsr-development-version"></a></h2>
-<div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li>
-<code><a href="../reference/ggfigs.html">ggfigs()</a></code> draws a fitted model with ‘ggplot2’, in five views: <code>"tree"</code> (node-link diagram of every tree), <code>"rules"</code> (every tree as a horizontal rule list, with <code>+</code> between trees), <code>"waterfall"</code> (where the prediction for one observation comes from), <code>"cuts"</code> (the numeric cutpoints drawn over the data) and <code>"profile"</code> (exact partial dependence). It returns a <code>ggplot</code>; with <code>interactive = TRUE</code> it returns a ‘ggiraph’ widget whose tooltips show the rule behind each node, leaf or cut. ‘ggiraph’ is only suggested. <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> gives the same <code>ggplot</code>s.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
-<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> no longer draws boxes on top of each other. Nodes used to sit on a fixed grid, so in deeper trees neighboring leaves and branch conditions overlapped and their labels were cut off. Each split now places its subtrees from the width of their labels, every tree gets a panel width proportional to the room it needs, and all trees share one vertical scale, so their roots line up. A drawing too large for its panel is scaled down, text included, instead of clipped.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="performance-development-version">Performance<a class="anchor" aria-label="anchor" href="#performance-development-version"></a></h3>
-<ul><li>The split search was rewritten and fitting is about 25 to 60 times faster (for example, 12.6 s to 0.33 s with 32,000 rows, 10 numeric predictors and <code>max_splits = 10</code>), allocating about 30 times less memory. Everything that depends on the predictors alone (row order, cutpoints, level groups) is computed once per node instead of once per iteration, every cutpoint of a predictor is scored from a single cumulative sum of the residuals instead of one pass per cutpoint, and a leaf whose residuals did not change since the last iteration keeps its previous best split. The fitted model is unchanged: the same splits, cutpoints, missing-value directions and sample indices as 0.2.0, which a new regression test checks on fourteen data sets.</li>
-</ul></div>
-</div>
-    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="figsr-020">figsr 0.2.0<a class="anchor" aria-label="anchor" href="#figsr-020"></a></h2>
 <div class="section level3">
-<h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
-<ul><li>A new vignette, <code><a href="../articles/missing-values.html">vignette("missing-values")</a></code>, works through <code>na_method = "mia"</code> on the real Pima Indians Diabetes Database, where missingness is informative but modest, and shows <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>’s new <code>main</code>, <code>tree_names</code> and sign-colored leaves on it.</li>
+<h3 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h3>
+<ul><li><p><code><a href="../reference/figs.html">figs()</a></code>, <code><a href="../reference/fit_figs.html">fit_figs()</a></code> and <code><a href="../reference/bagging_figs.html">bagging_figs()</a></code> gained <code>na_method</code>. The default <code>"omit"</code> is the previous behavior. <code>"mia"</code> (missingness incorporated in attributes, Twala et al. 2008) keeps every row: at each split the search also tries sending missing values left or right of the cutpoint, and splitting on missingness itself, and uses the learned direction at prediction time. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints these as <code>IS MISSING</code> clauses, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> labels the edge missing values take, and <code><a href="../reference/figsr_importance.html">figsr_importance()</a></code> reports a split on missingness on its own <code>missing(&lt;predictor&gt;)</code> row.</p></li>
+<li><p><code><a href="../reference/ggfigs.html">ggfigs()</a></code> draws a fitted model with ‘ggplot2’, in five views: <code>"tree"</code> (node-link diagram of every tree), <code>"rules"</code> (every tree as a horizontal rule list, with <code>+</code> between trees), <code>"waterfall"</code> (where the prediction for one observation comes from), <code>"cuts"</code> (the numeric cutpoints drawn over the data) and <code>"profile"</code> (exact partial dependence). It returns a <code>ggplot</code>; with <code>interactive = TRUE</code> it returns a ‘ggiraph’ widget whose tooltips show the rule behind each node, leaf or cut. ‘ggiraph’ is only suggested. <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> gives the same <code>ggplot</code>s.</p></li>
+<li><p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> gained <code>main</code>, an overall title drawn once above every tree panel, and <code>tree_names</code>, overriding the automatic per-tree panel titles (a single string applies to every tree; a vector is indexed by each tree’s position in the fit, so it stays correct when <code>tree_idx</code> only plots some of them; <code>NA</code> in a position keeps that tree’s default title). In the <code>"scientific"</code> and <code>"modern"</code> styles, a leaf’s background, border and text now depend on the sign of its contribution – green for positive, red for negative; <code>"classic"</code> stays monochromatic by design.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-0-2-0">Performance<a class="anchor" aria-label="anchor" href="#performance-0-2-0"></a></h3>
+<ul><li>The split search was rewritten and fitting is about 25 to 60 times faster (for example, 12.6 s to 0.33 s with 32,000 rows, 10 numeric predictors and <code>max_splits = 10</code>), allocating about 30 times less memory. Everything that depends on the predictors alone (row order, cutpoints, level groups) is computed once per node instead of once per iteration, every cutpoint of a predictor is scored from a single cumulative sum of the residuals instead of one pass per cutpoint, and a leaf whose residuals did not change since the last iteration keeps its previous best split. The fitted model is unchanged: the same splits, cutpoints, missing-value directions and sample indices as the previous search, which a new regression test checks on fourteen data sets.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
+<ul><li><p>The <code>parsnip</code> engine now fits through the formula interface. The previous data.frame interface ran <code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code> with <code>na.omit</code> before the engine, so <code><a href="https://generics.r-lib.org/reference/fit.html" class="external-link">fit()</a></code> silently dropped rows with a missing predictor.</p></li>
+<li><p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> no longer draws boxes on top of each other. Nodes used to sit on a fixed grid, so in deeper trees neighboring leaves and branch conditions overlapped and their labels were cut off. Each split now places its subtrees from the width of their labels, every tree gets a panel width proportional to the room it needs, and all trees share one vertical scale, so their roots line up. A drawing too large for its panel is scaled down, text included, instead of clipped.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="new-data-0-2-0">New data<a class="anchor" aria-label="anchor" href="#new-data-0-2-0"></a></h3>
@@ -71,13 +65,8 @@
 <code>pima_diabetes</code>: the Pima Indians Diabetes Database (Smith et al. 1988), 768 patients, ships lazily loaded like <code>iris</code>. Its five physiologically impossible zeros (<code>Glucose</code>, <code>BloodPressure</code>, <code>SkinThickness</code>, <code>Insulin</code>, <code>BMI</code>) are already recoded to <code>NA</code>, so it is ready to demonstrate <code>na_method = "mia"</code> without an internet connection or preprocessing.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h3>
-<ul><li><p><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> gained <code>main</code>, an overall title drawn once above every tree panel, and <code>tree_names</code>, overriding the automatic per-tree panel titles (a single string applies to every tree; a vector is indexed by each tree’s position in the fit, so it stays correct when <code>tree_idx</code> only plots some of them; <code>NA</code> in a position keeps that tree’s default title). In the <code>"scientific"</code> and <code>"modern"</code> styles, a leaf’s background, border and text now depend on the sign of its contribution – green for positive, red for negative; <code>"classic"</code> stays monochromatic by design.</p></li>
-<li><p><code><a href="../reference/figs.html">figs()</a></code>, <code><a href="../reference/fit_figs.html">fit_figs()</a></code> and <code><a href="../reference/bagging_figs.html">bagging_figs()</a></code> gained <code>na_method</code>. The default <code>"omit"</code> is the previous behavior. <code>"mia"</code> (missingness incorporated in attributes, Twala et al. 2008) keeps every row: at each split the search also tries sending missing values left or right of the cutpoint, and splitting on missingness itself, and uses the learned direction at prediction time. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> prints these as <code>IS MISSING</code> clauses, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> labels the edge missing values take, and <code><a href="../reference/figsr_importance.html">figsr_importance()</a></code> reports a split on missingness on its own <code>missing(&lt;predictor&gt;)</code> row.</p></li>
-</ul></div>
-<div class="section level3">
-<h3 id="bug-fixes-0-2-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
-<ul><li>The <code>parsnip</code> engine now fits through the formula interface. The previous data.frame interface ran <code><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame()</a></code> with <code>na.omit</code> before the engine, so <code><a href="https://generics.r-lib.org/reference/fit.html" class="external-link">fit()</a></code> silently dropped rows with a missing predictor.</li>
+<h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
+<ul><li>A new vignette, <code><a href="../articles/missing-values.html">vignette("missing-values")</a></code>, works through <code>na_method = "mia"</code> on the real Pima Indians Diabetes Database, where missingness is informative but modest, and shows <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>’s new <code>main</code>, <code>tree_names</code> and sign-colored leaves on it.</li>
 </ul></div>
 </div>
     <div class="section level2">

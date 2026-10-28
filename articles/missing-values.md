@@ -14,8 +14,7 @@ a tree can learn.
 available, the same way `iris` is available after
 [`library(datasets)`](https://rdrr.io/r/base/library.html). It is 768
 patient records with eight clinical predictors and a binary outcome
-(diabetes within five years), one of the most-used data sets on Kaggle
-(`kaggle.com/datasets/uciml/pima-indians-diabetes-database`), originally
+(diabetes within five years), a classic classification benchmark long
 distributed through the UCI Machine Learning Repository.
 
 ``` r

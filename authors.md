@@ -22,13 +22,13 @@ Source:
 
 Assis Bonifácio J, da Cruz Pereira G, Mambelli Fernandes P, Andrade
 Alves de Souza J (2026). *figsr: Fast Interpretable Greedy-Tree Sums for
-Tree Ensembles*. R package version 0.2.0.9000,
+Tree Ensembles*. R package version 0.2.0,
 <https://bonijoao.github.io/figsr/>.
 
     @Manual{,
       title = {figsr: Fast Interpretable Greedy-Tree Sums for Tree Ensembles},
       author = {João Paulo {Assis Bonifácio} and Geraldo Magela {da Cruz Pereira} and Pedro {Mambelli Fernandes} and João Vitor {Andrade Alves de Souza}},
       year = {2026},
-      note = {R package version 0.2.0.9000},
+      note = {R package version 0.2.0},
       url = {https://bonijoao.github.io/figsr/},
     }
