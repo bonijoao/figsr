@@ -1,0 +1,23 @@
+/* No logo on the home page: neither pkgdown's own nor the one in README.md,
+   which stays for GitHub. */
+.template-home .page-header img.logo,
+.template-home main img[alt="figsr logo"] {
+  display: none;
+}
+
+/* Plots are rendered with a transparent background, and in dark mode pkgdown
+   inverts them (filter: invert() hue-rotate()), which turns them black and
+   flips the leaf colors. Keep them as drawn, on white, in both themes. The
+   same filter hits the interactive ggfigs() widgets, which draw their own
+   white background. */
+img.r-plt,
+.r-plt img {
+  background-color: #ffffff;
+  border-radius: 0.375rem;
+}
+
+[data-bs-theme="dark"] img.r-plt,
+[data-bs-theme="dark"] pre .r-plt.img img,
+[data-bs-theme="dark"] .html-widget {
+  filter: none;
+}
