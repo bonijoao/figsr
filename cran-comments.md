@@ -13,7 +13,7 @@ conditionally.
 ## Test environments
 
 * Local Windows 11, R 4.5.3
-* win-builder, R-devel and R-release
+* win-builder, R-release
 * GitHub Actions: macOS, Windows and Ubuntu, R release; Ubuntu, R-devel and
   R oldrel-1
 
